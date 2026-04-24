@@ -8,8 +8,8 @@ export default function RootLayout() {
   const [init, setInit] = useState(true);
   const [user, setUser] = useState<any>(null);
 
-  const Logo = require("@/assets/images/Home_bg.png");
-  const { width, height } = Dimensions.get("window");
+  // const Logo = require("@/assets/images/Home_bg.png");
+  // const { width, height } = Dimensions.get("window");
 
   useEffect(() => {
     const checkUser = async () => {
@@ -36,11 +36,11 @@ export default function RootLayout() {
   if (init) {
     return (
       <View className="flex-1 justify-center items-center bg-white">
-        <Image
+        {/* <Image
           source={Logo}
           style={{ width: width * 1, height: height * 1 }}
           resizeMode="contain"
-        />
+        /> */}
         <ActivityIndicator
           size={"large"}
           color={"#FF9D00"}

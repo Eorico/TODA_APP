@@ -1,0 +1,31 @@
+export const Colors = {
+  primary: '#7B1020',
+  primaryLight: '#F5EAEB',
+  gold: '#8A7520',
+  goldLight: '#F5F1E0',
+  goldDark: '#6B5C18',
+  background: '#EDE8E3',
+  white: '#FFFFFF',
+  textPrimary: '#1A1A1A',
+  textSecondary: '#666666',
+  textMuted: '#999999',
+  border: '#E0DAD4',
+  gray: '#D0CAC4',
+  grayMedium: '#888888',
+  success: '#2E7D32',
+  pending: '#E65100',
+  unreadBg: '#F0E8EA',
+
+  crimson: '#7B0D1E',
+  crimsonDark: '#5C0915',
+   
+  grayLight: '#EFEFEF',
+  grayMed: '#C8C8C8',
+  grayDark: '#888888',
+  textDark: '#1A1A1A',
+  textMed: '#444444',
+  textLight: '#888888',
+ 
+  receivedBubble: '#E5E5E5',
+  sentBubble: '#7B0D1E',
+};
