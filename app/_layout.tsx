@@ -52,7 +52,7 @@ export default function RootLayout() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      {user ? <Stack.Screen name="pages" /> : <Stack.Screen name="auth" />}
+      {user ? <Stack.Screen name="users" /> : <Stack.Screen name="auth" />}
       <Stack.Screen name="notfound" />
     </Stack>
   );

@@ -27,33 +27,33 @@ import {
   Eye
 } from 'lucide-react-native';
 import { ENDPOINTS, API_CONFIG } from '../services/api';
-import { Role } from '@/constants/data';
+import { useRegistrationForm } from '@/hooks/use_register_form';
+import { Controller } from 'react-hook-form';
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const [role, setRole] = useState<Role>('passenger');
-  const [isLoading, setIsLoading] = useState(false);
-  
-  const [fullName, setFullName] = useState('');
-  const [contact, setContact] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [address, setAddress] = useState('');
-  const [bodyNumber, setBodyNumber] = useState('');
+  const {
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    setError,
+    formState: { isSubmitting, errors }
+  } = useRegistrationForm();
 
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [agreed, setAgreed] = useState(false);
-  const [licenseUploaded, setLicenseUploaded] = useState<string | null>(null);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const agreed = watch('agreed');
+  const licenseUploaded = watch('licenseUploaded');
+  const role = watch('role');
   const isPassenger = role === 'passenger';
 
   const pickLicenseImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (status !== 'granted') {
-      Alert.alert("Permission Denied", "We need gallery access to upload your license.");
+      Alert.alert('Permission Denied', "We need gallery access to upload your license.");
       return;
     }
 
@@ -65,96 +65,82 @@ export default function RegisterScreen() {
     });
 
     if (!result.canceled) {
-      setLicenseUploaded(result.assets[0].uri);
+      setValue('licenseUploaded', result.assets[0].uri);
     }
-  }
-  
-  
-  const handleRegister = async () => {
-    if (!fullName || !email || !contact || !password) {
-      Alert.alert("Missing Info", "Please fill in all required fields.")
-      return;
-    } 
-    
-    if (!email.endsWith("@gmail.com")) {
-      Alert.alert("Invalid Email", "Only Gmail accounts are allowed.");
-      return;
-    }
+  };
 
-    if (password !== confirmPassword) {
-      Alert.alert("Mismatch", "Password do not match");
-      return;
-    }
-
-    if (!isPassenger && !licenseUploaded) {
-      Alert.alert("License Required", "Please upload your driver's license");
-      return;
-    }
-
-    setIsLoading(true);
-
+  const handleRegister = handleSubmit(async (data) => {
     try {
-      let body;
-      let headers = { ...API_CONFIG.headers };
+      // Validate email format via form error instead of alert
+      if (!data.email.endsWith('@gmail.com')) {
+        setError('email', { message: 'Only Gmail accounts are allowed.' });
+        return;
+      }
 
-      if (!isPassenger && licenseUploaded) {
+      // Validate password match via form error instead of alert
+      if (data.password !== data.confirmPassword) {
+        setError('confirmPassword', { message: 'Passwords do not match.' });
+        return;
+      }
+
+      if (data.role !== 'passenger' && !data.licenseUploaded) {
+        setError('licenseUploaded', { message: "Please upload your driver's license." });
+        return;
+      }
+
+      let headers = { ...API_CONFIG.headers };
+      let body: any;
+
+      if (data.role !== 'passenger' && data.licenseUploaded) {
         const formData = new FormData();
-        formData.append('full_name', fullName);
-        formData.append('email', email);
-        formData.append('contact_number', contact);
-        formData.append('password', password);
-        formData.append('role', role);
-        formData.append('address', address);
-        formData.append('body_number', bodyNumber);
-        
-        const uriParts = licenseUploaded.split('.');
+
+        formData.append('full_name', data.fullName);
+        formData.append('email', data.email);
+        formData.append('contact_number', data.contact);
+        formData.append('password', data.password);
+        formData.append('role', data.role);
+        formData.append('address', data.address || '');
+        formData.append('body_number', data.bodyNumber || '');
+
+        const uriParts = data.licenseUploaded.split('.');
         const fileType = uriParts[uriParts.length - 1];
-        
+
         // @ts-ignore
         formData.append('license_file', {
-          uri: licenseUploaded,
+          uri: data.licenseUploaded,
           name: `license.${fileType}`,
           type: `image/${fileType}`,
         });
 
         body = formData;
-        // Delete content-type header to let the browser set the boundary automatically
-        delete (headers as any)['Content-Type']; 
+        delete (headers as any)['Content-Type'];
       } else {
-        body = JSON.stringify({
-          full_name: fullName,
-          email: email,
-          contact_number: contact,
-          password: password,
-          role: role,
-        });
+        body = JSON.stringify(data);
       }
 
       const res = await fetch(ENDPOINTS.REGISTER, {
         method: 'POST',
-        headers: headers,
-        body: body
+        headers,
+        body,
       });
 
-      const data = await res.json();
+      const response = await res.json();
 
       if (res.ok) {
-        Alert.alert("Success", role === 'driver' ? 
-          "Application submitted! Please wait for admin approval." : 
-          "Account created successfully");
+        Alert.alert(
+          'Success',
+          data.role === 'driver'
+            ? 'Application submitted!'
+            : 'Account created successfully'
+        );
         router.replace('/auth/login');
       } else {
-        // Backend error (e.g. email already exists)
-        throw new Error(data.detail || data.message || "Registration failed");
+        throw new Error(response.detail || response.message);
       }
     } catch (error: any) {
-      Alert.alert("Registration Error", error.message);
-      console.log(error.message);
-    } finally {
-      setIsLoading(false); // This stops the spinner
+      Alert.alert('Registration Error', error.message);
     }
-    
-  };
+  });
 
   return (
     <SafeAreaView className="flex-1 bg-[#F5EFE8]">
@@ -185,31 +171,27 @@ export default function RegisterScreen() {
               : 'Become a certified driver for our heritage transport network.'}
           </Text>
 
-          {/* Role Toggle */}
-          {isPassenger && (
-            <Text className="text-[11px] font-bold text-[#7B1A1A] tracking-widest mb-2">
-              REGISTER AS
-            </Text>
-          )}
+          {/* Role Toggle Label */}
+          <Text className="text-[11px] font-bold text-[#7B1A1A] tracking-widest mb-2">
+            REGISTER AS
+          </Text>
 
+          {/* Role Toggle */}
           <View className="flex-row bg-[#EDE7DE] rounded-full p-1 mb-7 w-full">
             {/* Passenger */}
             <TouchableOpacity
               className={`flex-1 flex-row items-center justify-center py-3 rounded-full ${
                 role === 'passenger' ? 'bg-[#7B1A1A]' : ''
               }`}
-              onPress={() => setRole('passenger')}
+              onPress={() => setValue('role', 'passenger')}
             >
-              <User
-                size={18}
-                color={role === 'passenger' ? '#FFF' : '#7B1A1A'}
-              />
+              <User size={18} color={role === 'passenger' ? '#FFF' : '#7B1A1A'} />
               <Text
                 className={`ml-2 font-bold ${
                   role === 'passenger' ? 'text-white' : 'text-[#7B1A1A]'
                 }`}
               >
-                {isPassenger ? 'PASSENGER' : 'Passenger'}
+                PASSENGER
               </Text>
             </TouchableOpacity>
 
@@ -218,18 +200,15 @@ export default function RegisterScreen() {
               className={`flex-1 flex-row items-center justify-center py-3 rounded-full ${
                 role === 'driver' ? 'bg-[#7B1A1A]' : ''
               }`}
-              onPress={() => setRole('driver')}
+              onPress={() => setValue('role', 'driver')}
             >
-              <Car
-                size={18}
-                color={role === 'driver' ? '#FFF' : '#7B1A1A'}
-              />
+              <Car size={18} color={role === 'driver' ? '#FFF' : '#7B1A1A'} />
               <Text
                 className={`ml-2 font-bold ${
                   role === 'driver' ? 'text-white' : 'text-[#7B1A1A]'
                 }`}
               >
-                {isPassenger ? 'DRIVER' : 'Driver'}
+                DRIVER
               </Text>
             </TouchableOpacity>
           </View>
@@ -240,139 +219,248 @@ export default function RegisterScreen() {
               FULL NAME
             </Text>
             <View className="flex-row items-center bg-[#EDE7DE] rounded-2xl px-4 py-4">
-              <TextInput
-                className="flex-1 text-[15px] text-[#1A1A1A]"
-                placeholder="John Doe"
-                placeholderTextColor="#B0A8A0"
-                value={fullName}
-                onChangeText={setFullName}
+              <Controller
+                control={control}
+                name="fullName"
+                rules={{ required: 'Full name is required.' }}
+                render={({ field: { value, onChange } }) => (
+                  <TextInput
+                    className="flex-1 text-[15px] text-[#1A1A1A]"
+                    placeholder="John Doe"
+                    placeholderTextColor="#B0A8A0"
+                    value={value}
+                    onChangeText={onChange}
+                  />
+                )}
               />
-              {isPassenger && <User size={18} color="#B0A8A0" />}
+              <User size={18} color="#B0A8A0" />
             </View>
+            {errors.fullName && (
+              <Text className="text-[12px] text-[#FF0000] mt-1">
+                {errors.fullName.message}
+              </Text>
+            )}
           </View>
-          
+
+          {/* Email */}
           <View className="w-full mb-4">
             <Text className="text-[11px] font-bold text-[#7B1A1A] mb-2 tracking-wider">
               EMAIL ADDRESS
             </Text>
             <View className="flex-row items-center bg-[#EDE7DE] rounded-2xl px-4 py-4">
-              <TextInput
-                className="flex-1 text-[15px] text-[#1A1A1A]"
-                placeholder="Mamttoda@gmail.com"
-                placeholderTextColor="#B0A8A0"
-                autoCapitalize='none'
-                value={email}
-                onChangeText={setEmail}
+              <Controller
+                control={control}
+                name="email"
+                rules={{ required: 'Email is required.' }}
+                render={({ field: { value, onChange } }) => (
+                  <TextInput
+                    className="flex-1 text-[15px] text-[#1A1A1A]"
+                    placeholder="example@gmail.com"
+                    placeholderTextColor="#B0A8A0"
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    value={value}
+                    onChangeText={onChange}
+                  />
+                )}
               />
-              {isPassenger && <User size={18} color="#B0A8A0" />}
+              <User size={18} color="#B0A8A0" />
             </View>
+            {errors.email && (
+              <Text className="text-[12px] text-[#FF0000] mt-1">
+                {errors.email.message}
+              </Text>
+            )}
           </View>
-
 
           {/* Driver-only fields */}
           {!isPassenger && (
             <>
+              {/* Address */}
               <View className="w-full mb-4">
-                <Text className="text-[11px] font-bold text-[#7B1A1A] mb-2">
+                <Text className="text-[11px] font-bold text-[#7B1A1A] mb-2 tracking-wider">
                   COMPLETE ADDRESS
                 </Text>
                 <View className="bg-[#EDE7DE] rounded-2xl px-4 py-4">
-                  <TextInput
-                    className="text-[15px]"
-                    placeholder="Street, Barangay, City"
-                    value={address}
-                    onChangeText={setAddress}
+                  <Controller
+                    control={control}
+                    name="address"
+                    rules={{ required: 'Address is required.' }}
+                    render={({ field: { value, onChange } }) => (
+                      <TextInput
+                        className="text-[15px] text-[#1A1A1A]"
+                        placeholder="Street, Barangay, City"
+                        placeholderTextColor="#B0A8A0"
+                        value={value}
+                        onChangeText={onChange}
+                      />
+                    )}
                   />
                 </View>
+                {errors.address && (
+                  <Text className="text-[12px] text-[#FF0000] mt-1">
+                    {errors.address.message}
+                  </Text>
+                )}
               </View>
 
+              {/* Body Number */}
               <View className="w-full mb-4">
-                <Text className="text-[11px] font-bold text-[#7B1A1A] mb-2">
+                <Text className="text-[11px] font-bold text-[#7B1A1A] mb-2 tracking-wider">
                   BODY NUMBER
                 </Text>
-                <View className="bg-[#EDE7DE] rounded-2xl px-4 py-4">
-                  <TextInput
-                    className="text-[15px]"
-                    placeholder="e.g. 1234-A"
-                    value={bodyNumber}
-                    onChangeText={setBodyNumber}
+                {/* FIX: Hash icon moved outside Controller but still inside the row View */}
+                <View className="flex-row items-center bg-[#EDE7DE] rounded-2xl px-4 py-4">
+                  <Controller
+                    control={control}
+                    name="bodyNumber"
+                    rules={{ required: 'Body number is required.' }}
+                    render={({ field: { value, onChange } }) => (
+                      <TextInput
+                        className="flex-1 text-[15px] text-[#1A1A1A]"
+                        placeholder="e.g. 1234-A"
+                        placeholderTextColor="#B0A8A0"
+                        value={value}
+                        onChangeText={onChange}
+                      />
+                    )}
                   />
-                  <Hash size={18} color={'#B0A8A0'}/>
+                  <Hash size={18} color="#B0A8A0" />
                 </View>
+                {errors.bodyNumber && (
+                  <Text className="text-[12px] text-[#FF0000] mt-1">
+                    {errors.bodyNumber.message}
+                  </Text>
+                )}
               </View>
             </>
           )}
 
-          {/* Contact */}
+          {/* Contact Number */}
           <View className="w-full mb-4">
-            <Text className="text-[11px] font-bold text-[#7B1A1A] mb-2">
+            <Text className="text-[11px] font-bold text-[#7B1A1A] mb-2 tracking-wider">
               CONTACT NUMBER
             </Text>
             <View className="flex-row items-center bg-[#EDE7DE] rounded-2xl px-4 py-4">
-              <TextInput 
-                className="flex-1 text-[15px]" 
-                keyboardType='phone-pad'
-                value={contact}
-                onChangeText={setContact}
+              <Controller
+                control={control}
+                name="contact"
+                rules={{ required: 'Contact number is required.' }}
+                render={({ field: { value, onChange } }) => (
+                  <TextInput
+                    className="flex-1 text-[15px] text-[#1A1A1A]"
+                    placeholder="09XXXXXXXXX"
+                    placeholderTextColor="#B0A8A0"
+                    keyboardType="phone-pad"
+                    value={value}
+                    onChangeText={onChange}
+                  />
+                )}
               />
-              {isPassenger && <Phone size={18} color="#B0A8A0" />}
+              <Phone size={18} color="#B0A8A0" />
             </View>
+            {errors.contact && (
+              <Text className="text-[12px] text-[#FF0000] mt-1">
+                {errors.contact.message}
+              </Text>
+            )}
           </View>
 
-          {/* Password Fields */}
-          <View className='w-full mb-4'>
-            <Text className='text-[11px] font-bold text-[#7B1A1A] mb-2'>
+          {/* Password */}
+          <View className="w-full mb-4">
+            <Text className="text-[11px] font-bold text-[#7B1A1A] mb-2 tracking-wider">
               PASSWORD
             </Text>
-            <View className='flex-row items-center bg-[#EDE7DE] rounded-2xl px-4 py-4'>
-              <TextInput
-                className='flex-1 text-[15px]'
-                secureTextEntry={!showPassword}
-                value={password}
-                onChangeText={setPassword}
+            <View className="flex-row items-center bg-[#EDE7DE] rounded-2xl px-4 py-4">
+              <Controller
+                control={control}
+                name="password"
+                rules={{ required: 'Password is required.' }}
+                render={({ field: { value, onChange } }) => (
+                  <TextInput
+                    className="flex-1 text-[15px] text-[#1A1A1A]"
+                    placeholder="••••••••"
+                    placeholderTextColor="#B0A8A0"
+                    secureTextEntry={!showPassword}
+                    value={value}
+                    onChangeText={onChange}
+                  />
+                )}
               />
-              <TouchableOpacity
-                onPress={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff size={18} color={'#B0A8A0'}/> : <Eye size={18} color={'#B0A8A0'}/>}
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                {showPassword
+                  ? <EyeOff size={18} color="#B0A8A0" />
+                  : <Eye size={18} color="#B0A8A0" />}
               </TouchableOpacity>
             </View>
+            {errors.password && (
+              <Text className="text-[12px] text-[#FF0000] mt-1">
+                {errors.password.message}
+              </Text>
+            )}
           </View>
 
-          <View className='w-full mb-4'>
-            <Text className='text-[11px] font-bold text-[#7B1A1A] mb-2'>
+          {/* Confirm Password */}
+          <View className="w-full mb-4">
+            <Text className="text-[11px] font-bold text-[#7B1A1A] mb-2 tracking-wider">
               CONFIRM PASSWORD
             </Text>
-            <View className='flex-row items-center bg-[#EDE7DE] rounded-2xl px-4 py-4'>
-              <TextInput
-                className='flex-1 text-[15px]'
-                secureTextEntry={!showConfirmPassword}
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
+            <View className="flex-row items-center bg-[#EDE7DE] rounded-2xl px-4 py-4">
+              <Controller
+                control={control}
+                name="confirmPassword"
+                rules={{ required: 'Please confirm your password.' }}
+                render={({ field: { value, onChange } }) => (
+                  <TextInput
+                    className="flex-1 text-[15px] text-[#1A1A1A]"
+                    placeholder="••••••••"
+                    placeholderTextColor="#B0A8A0"
+                    secureTextEntry={!showConfirmPassword}
+                    value={value}
+                    onChangeText={onChange}
+                  />
+                )}
               />
-              <TouchableOpacity
-                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-              >
-                {showConfirmPassword ? <EyeOff size={18} color={'#B0A8A0'}/> : <Eye size={18} color={'#B0A8A0'}/>}
+              <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+                {showConfirmPassword
+                  ? <EyeOff size={18} color="#B0A8A0" />
+                  : <Eye size={18} color="#B0A8A0" />}
               </TouchableOpacity>
             </View>
+            {errors.confirmPassword && (
+              <Text className="text-[12px] text-[#FF0000] mt-1">
+                {errors.confirmPassword.message}
+              </Text>
+            )}
           </View>
 
-          {/* 3. Updated License Upload Section */}
+          {/* Driver's License Upload */}
           {!isPassenger && (
             <View className="w-full mb-6">
-              <Text className="text-[11px] font-bold text-[#7B1A1A] mb-2">DRIVER'S LICENSE</Text>
+              <Text className="text-[11px] font-bold text-[#7B1A1A] mb-2 tracking-wider">
+                DRIVER'S LICENSE
+              </Text>
               <TouchableOpacity
                 className={`w-full border-2 border-dashed rounded-2xl overflow-hidden items-center justify-center ${
-                  licenseUploaded ? 'border-[#7B1A1A] bg-[#F5EBE0]' : 'border-[#D8CCBC] bg-[#FAF6F0]'
+                  licenseUploaded
+                    ? 'border-[#7B1A1A] bg-[#F5EBE0]'
+                    : 'border-[#D8CCBC] bg-[#FAF6F0]'
                 }`}
                 style={{ height: 160 }}
                 onPress={pickLicenseImage}
               >
                 {licenseUploaded ? (
+                  // FIX: replaced `inset-0` with explicit absolute positioning
                   <View className="w-full h-full">
-                    <Image source={{ uri: licenseUploaded }} className="w-full h-full" resizeMode="cover" />
-                    <View className="absolute inset-0 bg-black/20 items-center justify-center">
+                    <Image
+                      source={{ uri: licenseUploaded }}
+                      className="w-full h-full"
+                      resizeMode="cover"
+                    />
+                    <View
+                      className="absolute bg-black/20 items-center justify-center"
+                      style={{ top: 0, left: 0, right: 0, bottom: 0 }}
+                    >
                       <Text className="text-white font-bold">Tap to Change</Text>
                     </View>
                   </View>
@@ -386,64 +474,62 @@ export default function RegisterScreen() {
                   </>
                 )}
               </TouchableOpacity>
+              {/* FIX: added missing license error display */}
+              {errors.licenseUploaded && (
+                <Text className="text-[12px] text-[#FF0000] mt-1">
+                  {errors.licenseUploaded.message}
+                </Text>
+              )}
             </View>
           )}
 
-          {/* Terms and Agreement Checkbox */}
-          {isPassenger && (
-            <TouchableOpacity
-              className="flex-row items-start w-full mb-6"
-              onPress={() => setAgreed(!agreed)}
+          {/* Terms checkbox — shown for both roles */}
+          <TouchableOpacity
+            className="flex-row items-start w-full mb-6"
+            onPress={() => setValue('agreed', !watch('agreed'))}
+          >
+            <View
+              className={`w-5 h-5 rounded-md border-2 mr-3 items-center justify-center ${
+                agreed ? 'bg-[#7B1A1A] border-[#7B1A1A]' : 'border-gray-400'
+              }`}
             >
-              <View
-                className={`w-5 h-5 rounded-md border-2 mr-3 items-center justify-center ${
-                  agreed ? 'bg-[#7B1A1A]' : 'border-gray-400'
-                }`}
-              >
-                {agreed && <Text className="text-white">✓</Text>}
-              </View>
-              <Text className="flex-1 text-[14px]">
-                I agree to Terms and Privacy Policy
-              </Text>
-            </TouchableOpacity>
-          )}
+              {agreed && <Text className="text-white text-[12px]">✓</Text>}
+            </View>
+            <Text className="flex-1 text-[14px] text-[#1A1A1A]">
+              I agree to the Terms and Privacy Policy
+            </Text>
+          </TouchableOpacity>
 
           {/* Submit Button */}
           <TouchableOpacity
             className="flex-row items-center justify-center bg-[#7B1A1A] rounded-full py-4 w-full mb-4"
             onPress={handleRegister}
-            disabled={isLoading}
+            disabled={isSubmitting}
           >
-            {isLoading ? <ActivityIndicator color={'#FFF'}/> :
-              (
-                <>
-                <Text className="text-white font-bold text-[17px] mr-2">
-                  Sign Up
-                </Text>
+            {isSubmitting ? (
+              <ActivityIndicator color="#FFF" />
+            ) : (
+              <>
+                <Text className="text-white font-bold text-[17px] mr-2">Sign Up</Text>
                 <UserPlus size={20} color="#C8960C" />
-                </>
-              )
-            }
+              </>
+            )}
           </TouchableOpacity>
 
-          {/* Footer */}
+          {/* Footer Links */}
           <View className="flex-row mt-4">
             <TouchableOpacity className="items-center mx-4">
               <View className="w-9 h-9 rounded-full bg-[#7B1A1A] items-center justify-center">
                 <Info size={14} color="#FFF" />
               </View>
-              <Text className="text-[10px] mt-1 font-bold text-[#7B1A1A]">
-                ABOUT
-              </Text>
+              <Text className="text-[10px] mt-1 font-bold text-[#7B1A1A]">ABOUT</Text>
             </TouchableOpacity>
 
             <TouchableOpacity className="items-center mx-4">
               <View className="w-9 h-9 rounded-full bg-[#7B1A1A] items-center justify-center">
                 <HelpCircle size={14} color="#FFF" />
               </View>
-              <Text className="text-[10px] mt-1 font-bold text-[#7B1A1A]">
-                SUPPORT
-              </Text>
+              <Text className="text-[10px] mt-1 font-bold text-[#7B1A1A]">SUPPORT</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

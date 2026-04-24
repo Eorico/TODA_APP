@@ -1,6 +1,39 @@
 export type Role = 'driver' | 'passenger';
 export type Step = 'email' | 'code' | 'password';
 
+export type LoginFormData = {
+  role: Role;
+  bodyNumber: string;
+  email: string;
+  password: string;
+}
+
+export type RegisterFormData = {
+  role: Role;
+  fullName: string;
+  contact: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  address?: string;
+  bodyNumber?: string;
+  agreed: boolean;
+  licenseUploaded?: string;
+}
+
+export type EmailStepData = {
+  email: string;
+};
+
+export type CodeStepData = {
+  code: string;
+};
+
+export type PasswordStepData = {
+  newPassword: string;
+  confirmPassword: string;
+};
+
 export interface Conversation {
   id: string;
   name: string;

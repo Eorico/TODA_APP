@@ -13,7 +13,7 @@ export default function NotFound() {
       }}
     >
       <Text>Screen does not found!</Text>
-      <Pressable onPress={() => router.push('/auth/Login')}>
+      <Pressable onPress={() => router.push('/auth/login')}>
         <Text>GO BACK</Text>
       </Pressable>
     </View>
