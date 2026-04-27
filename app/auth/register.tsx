@@ -24,7 +24,8 @@ import {
   Info,
   Circle as HelpCircle,
   EyeOff,
-  Eye
+  Eye,
+  ArrowLeft
 } from 'lucide-react-native';
 import { ENDPOINTS, API_CONFIG } from '../services/api';
 import { useRegistrationForm } from '@/hooks/use_register_form';
@@ -153,6 +154,15 @@ export default function RegisterScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+
+        {/* Back Button */}
+          <TouchableOpacity
+            className="self-start w-10 h-10 rounded-xl bg-white items-center justify-center mb-5 shadow-sm"
+            onPress={() => router.back()}
+          >
+            <ArrowLeft size={20} color="#7B1A1A" />
+          </TouchableOpacity>
+          
           {/* Logo */}
           <View className="mb-6">
             <View className="w-[88px] h-[88px] rounded-[20px] bg-white items-center justify-center shadow-md">
