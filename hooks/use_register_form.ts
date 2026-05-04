@@ -14,7 +14,9 @@ export const useRegistrationForm = () => {
             confirmPassword: '',
             address: '',
             bodyNumber: '',
-            agreed: false
+            agreed: false,
+            licenseUploaded: '',  
+            orcrUploaded: '',
         }
     })
 }

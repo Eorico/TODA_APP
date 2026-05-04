@@ -19,6 +19,7 @@ export type RegisterFormData = {
   bodyNumber?: string;
   agreed: boolean;
   licenseUploaded?: string;
+  orcrUploaded?: string;
 }
 
 export type EmailStepData = {

@@ -47,6 +47,7 @@ export default function RegisterScreen() {
 
   const agreed = watch('agreed');
   const licenseUploaded = watch('licenseUploaded');
+  const orcrUploaded = watch('orcrUploaded')
   const role = watch('role');
   const isPassenger = role === 'passenger';
 
@@ -70,6 +71,23 @@ export default function RegisterScreen() {
     }
   };
 
+  const pickOrCrImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'We need gallery access to upload your OR/CR.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      quality: 0.5,
+      base64: true,
+    });
+    if (!result.canceled) {
+      setValue('orcrUploaded', result.assets[0].uri);
+    }
+  };
+
   const handleRegister = handleSubmit(async (data) => {
     try {
       // Validate email format via form error instead of alert
@@ -86,6 +104,11 @@ export default function RegisterScreen() {
 
       if (data.role !== 'passenger' && !data.licenseUploaded) {
         setError('licenseUploaded', { message: "Please upload your driver's license." });
+        return;
+      }
+
+      if (data.role !== 'passenger' && !data.orcrUploaded) {
+        setError('orcrUploaded', { message: 'Please upload your OR/CR.' });
         return;
       }
 
@@ -112,6 +135,17 @@ export default function RegisterScreen() {
           name: `license.${fileType}`,
           type: `image/${fileType}`,
         });
+
+        if (data.orcrUploaded) {
+          const orcrParts = data.orcrUploaded.split('.');
+          const orcrType = orcrParts[orcrParts.length - 1];
+          // @ts-ignore
+          formData.append('orcr_file', {
+            uri: data.orcrUploaded,
+            name: `orcr.${orcrType}`,
+            type: `image/${orcrType}`,
+          });
+        }
 
         body = formData;
         delete (headers as any)['Content-Type'];
@@ -488,6 +522,51 @@ export default function RegisterScreen() {
               {errors.licenseUploaded && (
                 <Text className="text-[12px] text-[#FF0000] mt-1">
                   {errors.licenseUploaded.message}
+                </Text>
+              )}
+            </View>
+          )}
+
+          {/* OR/CR Upload */}
+          {!isPassenger && (
+            <View className="w-full mb-6">
+              <Text className="text-[11px] font-bold text-[#7B1A1A] mb-2 tracking-wider">
+                OR / CR (Official Receipt / Certificate of Registration)
+              </Text>
+              <TouchableOpacity
+                className={`w-full border-2 border-dashed rounded-2xl overflow-hidden items-center justify-center ${
+                  orcrUploaded ? 'border-[#7B1A1A] bg-[#F5EBE0]' : 'border-[#D8CCBC] bg-[#FAF6F0]'
+                }`}
+                style={{ height: 160 }}
+                onPress={pickOrCrImage}
+              >
+                {orcrUploaded ? (
+                  <View className="w-full h-full">
+                    <Image
+                      source={{ uri: orcrUploaded }}
+                      className="w-full h-full"
+                      resizeMode="cover"
+                    />
+                    <View
+                      className="absolute bg-black/20 items-center justify-center"
+                      style={{ top: 0, left: 0, right: 0, bottom: 0 }}
+                    >
+                      <Text className="text-white font-bold">Tap to Change</Text>
+                    </View>
+                  </View>
+                ) : (
+                  <>
+                    <View className="w-12 h-12 rounded-full bg-white items-center justify-center mb-2 shadow-sm">
+                      <Upload size={20} color="#7B1A1A" />
+                    </View>
+                    <Text className="font-bold text-[#6B6059]">Upload OR/CR Photo</Text>
+                    <Text className="text-[12px] text-[#B0A8A0]">Official Receipt or Certificate of Registration</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+              {errors.orcrUploaded && (
+                <Text className="text-[12px] text-[#FF0000] mt-1">
+                  {errors.orcrUploaded.message}
                 </Text>
               )}
             </View>
