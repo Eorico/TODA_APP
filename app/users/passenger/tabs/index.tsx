@@ -110,7 +110,7 @@ function ConversationRow({ conv, onPress }: { conv: any; onPress: () => void }) 
             {conv.lastMessage}
           </Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-            {conv.unread && (
+            {!!conv.unread && (
               <View style={{
                 minWidth: 20, height: 20, borderRadius: 10,
                 backgroundColor: CRIMSON, alignItems: 'center',

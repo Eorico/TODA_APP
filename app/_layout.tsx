@@ -14,7 +14,7 @@ export default function RootLayout() {
   const [init, setInit] = useState(true);
   const [user, setUser] = useState<any>(null);
 
-  const Logo = require("@/assets/images/Logo.jpg");
+  const Logo = require("@/assets/images/Logo.png");
   const { width } = Dimensions.get("window");
 
   const bounceAnim = useRef(new Animated.Value(-300)).current;

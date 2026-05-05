@@ -103,8 +103,8 @@ export default function LoginScreen() {
           <View className="mb-6  top-3">
             <View className="w-[98px] h-[88px] rounded-2xl bg-white items-center justify-center shadow-md">
               <Image
-                source={require("@/assets/images/splash.png")}
-                style={{ width: 180, height: 180, borderRadius: 12 }}
+                source={require("@/assets/images/Logo.png")}
+                style={{ width: 150, height: 150, borderRadius: 12 }}
                 resizeMode="contain"
               />
             </View>
@@ -114,8 +114,8 @@ export default function LoginScreen() {
           <Text className="text-[34px] font-black text-[#1A1A1A] text-center mb-2">Welcome Back</Text>
           <Text className="text-[15px] text-[#6B6059] text-center leading-6 mb-8 px-4">
             {role === 'driver'
-              ? 'Continue your journey with the Heritage Gallery.'
-              : 'Continue your journey through the collection of fine arts.'}
+              ? 'Continue your journey as a tricycle driver.'
+              : 'Come and see the latest updates and announcements from the MAMTTODA.'}
           </Text>
 
           {/* Role Toggle */}

@@ -219,8 +219,8 @@ export default function RegisterScreen() {
           <View className="mb-6  top-3">
             <View className="w-[98px] h-[88px] rounded-2xl bg-white items-center justify-center shadow-md">
               <Image
-                source={require("@/assets/images/splash.png")}
-                style={{ width: 180, height: 180, borderRadius: 12 }}
+                source={require("@/assets/images/Logo.png")}
+                style={{ width: 150, height: 150, borderRadius: 12 }}
                 resizeMode="contain"
               />
             </View>
