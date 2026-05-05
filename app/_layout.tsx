@@ -1,29 +1,40 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Stack } from "expo-router";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, Dimensions, Image, View } from "react-native";
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator, Animated, Dimensions, Image, View,
+} from "react-native";
 import "../global.css";
+
+// ← Keep the native splash visible until we're ready
+SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [init, setInit] = useState(true);
   const [user, setUser] = useState<any>(null);
 
-  // const Logo = require("@/assets/images/Home_bg.png");
-  // const { width, height } = Dimensions.get("window");
+  const Logo = require("@/assets/images/Logo.jpg");
+  const { width } = Dimensions.get("window");
+
+  const bounceAnim = useRef(new Animated.Value(-300)).current;
 
   useEffect(() => {
+    // ← Hide the native splash immediately so our custom one shows
+    SplashScreen.hideAsync();
+
+    Animated.spring(bounceAnim, {
+      toValue: 0,
+      friction: 4,
+      tension: 60,
+      useNativeDriver: true,
+    }).start();
+
     const checkUser = async () => {
       try {
         const storedUser = await AsyncStorage.getItem("user");
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
-        } else {
-          setUser(null);
-        }
-
-        setTimeout(() => {
-          setInit(false);
-        }, 3000);
+        setUser(storedUser ? JSON.parse(storedUser) : null);
+        setTimeout(() => setInit(false), 3000);
       } catch (error) {
         console.log("Error loading storage:", error);
         setInit(false);
@@ -36,15 +47,17 @@ export default function RootLayout() {
   if (init) {
     return (
       <View className="flex-1 justify-center items-center bg-white">
-        {/* <Image
-          source={Logo}
-          style={{ width: width * 1, height: height * 1 }}
-          resizeMode="contain"
-        /> */}
+        <Animated.View style={{ transform: [{ translateY: bounceAnim }] }}>
+          <Image
+            source={Logo}
+            style={{ width: width * 1, height: width * 1 }}
+            resizeMode="contain"
+          />
+        </Animated.View>
         <ActivityIndicator
-          size={"large"}
-          color={"#FF9D00"}
-          style={{ marginTop: -300 }}
+          size="large"
+          color="#FF9D00"
+          style={{ marginTop: 24 }}
         />
       </View>
     );

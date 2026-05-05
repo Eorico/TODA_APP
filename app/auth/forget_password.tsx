@@ -1,21 +1,25 @@
 import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
-  SafeAreaView, KeyboardAvoidingView, Platform, Alert, ActivityIndicator,
+  SafeAreaView, KeyboardAvoidingView, Platform, ActivityIndicator,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Mail, ArrowLeft, Send, EyeOff, Eye } from 'lucide-react-native';
 import { Controller } from 'react-hook-form';
-import { ENDPOINTS, API_CONFIG } from '../services/api';
+import { SHARED_ENDPOINTS, API_CONFIG } from '../../services/api';
 import { Step } from '@/constants/data';
 import {
   useEmailStepForm,
   useCodeStepForm,
   usePasswordStepForm,
 } from '@/hooks/use_forgot_password_form';
+import { Toast } from '@/components/toast';
+import { useToast } from '@/hooks/use_toast';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
+  const { toast, showToast, hideToast } = useToast();
   const [step, setStep] = useState<Step>('email');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -35,14 +39,14 @@ export default function ForgotPasswordScreen() {
   // Step 1 — Send Code
   const handleSendCode = emailForm.handleSubmit(async (data) => {
     try {
-      const res = await fetch(ENDPOINTS.FORGOT_PASSWORD, {
+      const res = await fetch(SHARED_ENDPOINTS.FORGOT_PASSWORD, {
         method: 'POST',
         headers: API_CONFIG.headers,
         body: JSON.stringify({ email: data.email }),
       });
 
       if (res.ok) {
-        Alert.alert('Sent', 'Verification code sent to your email.');
+        showToast('Verification code sent to your email.', 'success');
         setStep('code');
       } else {
         const json = await res.json();
@@ -56,7 +60,7 @@ export default function ForgotPasswordScreen() {
   // Step 2 — Verify Code
   const handleVerifyCode = codeForm.handleSubmit(async (data) => {
     try {
-      const res = await fetch(ENDPOINTS.VERIFY_CODE, {
+      const res = await fetch(SHARED_ENDPOINTS.VERIFY_CODE, {
         method: 'POST',
         headers: API_CONFIG.headers,
         body: JSON.stringify({ email: submittedEmail, code: data.code }),
@@ -80,7 +84,7 @@ export default function ForgotPasswordScreen() {
     }
 
     try {
-      const res = await fetch(ENDPOINTS.FORGOT_PASSWORD, {
+      const res = await fetch(SHARED_ENDPOINTS.RESET_PASSWORD, {
         method: 'POST',
         headers: API_CONFIG.headers,
         body: JSON.stringify({
@@ -91,9 +95,8 @@ export default function ForgotPasswordScreen() {
       });
 
       if (res.ok) {
-        Alert.alert('Success', 'Password updated successfully!', [
-          { text: 'Login', onPress: () => router.replace('/auth/login') },
-        ]);
+        showToast('Password updated successfully!', 'success');
+        router.replace('/auth/login');
       } else {
         passwordForm.setError('newPassword', { message: 'Failed to reset password.' });
       }
@@ -104,6 +107,12 @@ export default function ForgotPasswordScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#F5EFE8]">
+      <Toast 
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onHide={hideToast}
+      />
       <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
           contentContainerClassName="px-6 pt-4 pb-8 items-center"
@@ -119,9 +128,13 @@ export default function ForgotPasswordScreen() {
           </TouchableOpacity>
 
           {/* Logo */}
-          <View className="mb-4">
-            <View className="w-[88px] h-[88px] rounded-[20px] bg-white items-center justify-center shadow-md">
-              <Text className="text-[36px] font-black text-[#7B1A1A]">M</Text>
+          <View className="mb-6  top-[-10px]">
+            <View className="w-[78px] h-[88px] rounded-2xl bg-white items-center justify-center shadow-md">
+              <Image
+                source={require("@/assets/images/splash.png")}
+                style={{ width: 150, height: 150, borderRadius: 12 }}
+                resizeMode="contain"
+              />
             </View>
           </View>
 

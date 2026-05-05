@@ -11,9 +11,9 @@ export default function NotFoundScreen() {
           This tricycle driver screen doesn't exist.
         </Text>
 
-        <Link href="/" className="mt-4 py-4">
+        <Link href="/auth/login" className="mt-4 py-4">
           <Text className="text-blue-600 font-medium">
-            Go to home screen!
+            Go to login screen!
           </Text>
         </Link>
       </View>

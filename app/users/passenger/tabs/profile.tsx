@@ -1,20 +1,38 @@
+// app/(passenger)/profile.tsx
 import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  ScrollView,
-  SafeAreaView,
+  View, Text, Image, TouchableOpacity,
+  ScrollView, SafeAreaView, Platform,
 } from 'react-native';
-import { Pencil, User, Wifi, ShieldCheck } from 'lucide-react-native';
+import { Pencil, User, Wifi, ShieldCheck, LogOut } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { router } from 'expo-router';
+
+const CRIMSON = '#7B1A1A';
+const GOLD    = '#C8960C';
 
 export default function ProfileScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-100">
+      {/* ── HEADER ── */}
+      <View style={{ backgroundColor: CRIMSON, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 16}}>
+        <Text style={{ color: GOLD, fontSize: 10, fontWeight: '700', letterSpacing: 0.8, marginBottom: 2 }}>
+          MAMTTODA
+        </Text>
+        <Text style={{ color: '#FFFFFF', fontSize: 20, fontWeight: '800' }}>
+          Passenger Hub
+        </Text>
+        <Text style={{ color: 'rgba(255,255,255,0.55)', fontSize: 12, marginTop: 2 }}>
+          Stay informed · Ride safe
+        </Text>
+      </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          // ✅ this is the fix — clears the floating tab bar height
+          paddingBottom: Platform.OS === 'ios' ? 100 : 86,
+        }}
+      >
 
         {/* PROFILE CARD */}
         <View className="bg-[#F0E8E4] mx-4 mt-5 rounded-2xl p-6 items-center">
@@ -27,7 +45,6 @@ export default function ProfileScreen() {
               }}
               className="w-[110px] h-[110px] rounded-xl border-4 border-yellow-500 bg-[#C0B090]"
             />
-
             <View className="absolute -bottom-2 -right-2 w-[30px] h-[30px] rounded-full bg-yellow-500 items-center justify-center border-2 border-white">
               <ShieldCheck size={16} color="white" strokeWidth={2.5} />
             </View>
@@ -45,7 +62,6 @@ export default function ProfileScreen() {
                 VERIFIED PASSENGER
               </Text>
             </View>
-
             <Text className="text-sm text-gray-600 ml-1">
               • Joined Oct 2021
             </Text>
@@ -62,7 +78,6 @@ export default function ProfileScreen() {
 
         {/* PERSONAL DETAILS */}
         <View className="bg-white border border-gray-200 rounded-xl mx-4 mt-4 p-5">
-
           <View className="flex-row items-center gap-2 mb-4">
             <User size={16} color={Colors.crimson} strokeWidth={2} />
             <Text className="text-xs font-extrabold tracking-widest text-gray-800">
@@ -74,9 +89,7 @@ export default function ProfileScreen() {
             <Text className="text-[10px] font-bold text-gray-500 tracking-widest mb-1">
               FULL NAME
             </Text>
-            <Text className="text-base text-gray-800">
-              Marcus Holloway
-            </Text>
+            <Text className="text-base text-gray-800">Marcus Holloway</Text>
           </View>
 
           <View className="h-px bg-gray-200 my-1" />
@@ -85,15 +98,12 @@ export default function ProfileScreen() {
             <Text className="text-[10px] font-bold text-gray-500 tracking-widest mb-1">
               PHONE NUMBER
             </Text>
-            <Text className="text-base text-gray-800">
-              +1 (555) 012-3456
-            </Text>
+            <Text className="text-base text-gray-800">+1 (555) 012-3456</Text>
           </View>
         </View>
 
         {/* CONNECTIVITY */}
         <View className="bg-white border border-gray-200 rounded-xl mx-4 mt-4 p-5">
-
           <View className="flex-row items-center gap-2 mb-4">
             <Wifi size={16} color={Colors.crimson} strokeWidth={2} />
             <Text className="text-xs font-extrabold tracking-widest text-gray-800">
@@ -122,14 +132,18 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* LOGOUT */}
-        <TouchableOpacity onPress={() => router.replace('/auth/login')} className="items-center py-5 mt-2">
-          <Text className="text-base font-semibold text-red-700">
-            Logout
+        {/* LOGOUT — now fully visible */}
+        <TouchableOpacity
+          onPress={() => router.replace('/auth/login')}
+          className="flex-row items-center justify-center gap-2 mx-4 mt-4 py-4 rounded-xl border-red-100"
+          style={{ backgroundColor: CRIMSON }}
+        >
+          <LogOut size={16} color="white" strokeWidth={2} />
+          <Text className="text-[15px] font-semibold text-neutral-50 ">
+            Log Out
           </Text>
         </TouchableOpacity>
 
-        <View className="h-2" />
       </ScrollView>
     </SafeAreaView>
   );

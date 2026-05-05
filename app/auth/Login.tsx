@@ -1,16 +1,21 @@
 import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
-  SafeAreaView, KeyboardAvoidingView, Platform, Alert, ActivityIndicator,
+  SafeAreaView, KeyboardAvoidingView, Platform, ActivityIndicator,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Car, User, Mail, Eye, EyeOff, Hash, LogIn, Info } from 'lucide-react-native';
+import { Bike, UserRound, Mail, Eye, EyeOff, Hash, LogIn, Info } from 'lucide-react-native';
 import { Controller } from 'react-hook-form';
-import { ENDPOINTS, API_CONFIG } from '../services/api';
+import { AUTH_ENDPOINTS, API_CONFIG } from '@/services/api';
 import { useLoginForm } from '@/hooks/use_login_form';
+import { Toast } from '@/components/toast';
+import { useToast } from '@/hooks/use_toast';
+import { Role } from '@/constants/data';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { toast, showToast, hideToast } = useToast();
   const {
     control,
     handleSubmit,
@@ -31,6 +36,7 @@ export default function LoginScreen() {
     }
 
     try {
+      const ENDPOINTS = AUTH_ENDPOINTS(data.role as Role);
       const payload = {
         email: data.email,
         password: data.password,
@@ -50,24 +56,42 @@ export default function LoginScreen() {
         throw new Error(response.detail || response.message || 'Invalid Credentials');
       }
 
+      if (response.role !== data.role) {
+        showToast(
+          response.role === 'driver' 
+          ? 'This account is registered as a driver. Please switch to the driver role or use a different account.'
+          : 'This account is registered as a passenger. Please switch to the passenger role or use a different account.',
+          'warning'
+        );
+        return;
+      }
+
       if (data.role === 'driver') {
         if (response.status === 'pending') {
-          Alert.alert('Account Pending', 'Your account is still being reviewed. Please wait for approval.');
+          showToast('Your account is still being reviewed. Please wait for approval.', 'info');
         } else if (response.status === 'rejected') {
-          Alert.alert('Account Rejected', 'Your account was not approved. Please contact the admin office.');
+          showToast('Your account was not approved. Please contact the admin office.', 'error');
         } else {
           router.replace('/users/tricycle_driver/tabs/bulletin');
         }
       } else {
-        router.replace('/users/passenger/tabs/announcements');
+        router.replace('/users/passenger/tabs/bulletin');
       }
     } catch (error: any) {
-      Alert.alert('Login Failed', error.message);
+      showToast(error.message || 'Login failed. Please try again.', 'error');
     }
   });
 
   return (
     <SafeAreaView className="flex-1 bg-[#F5EFE8]">
+
+      <Toast 
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onHide={hideToast}
+      />
+
       <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
           className="flex-1"
@@ -76,9 +100,13 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           {/* Logo */}
-          <View className="mb-6">
-            <View className="w-[88px] h-[88px] rounded-2xl bg-white items-center justify-center shadow-md">
-              <Text className="text-4xl font-black text-[#7B1A1A] -tracking-tight">M</Text>
+          <View className="mb-6  top-3">
+            <View className="w-[98px] h-[88px] rounded-2xl bg-white items-center justify-center shadow-md">
+              <Image
+                source={require("@/assets/images/splash.png")}
+                style={{ width: 180, height: 180, borderRadius: 12 }}
+                resizeMode="contain"
+              />
             </View>
           </View>
 
@@ -93,24 +121,24 @@ export default function LoginScreen() {
           {/* Role Toggle */}
           <View className="flex-row bg-[#EDE7DE] rounded-full p-1 mb-7 w-full">
             <TouchableOpacity
-              onPress={() => setValue('role', 'driver')}
-              activeOpacity={0.8}
-              className={`flex-1 flex-row items-center justify-center py-3 rounded-full ${role === 'driver' ? 'bg-[#7B1A1A]' : ''}`}
-            >
-              <Car size={18} color={role === 'driver' ? '#fff' : '#7B1A1A'} />
-              <Text className={`ml-2 text-[15px] font-semibold ${role === 'driver' ? 'text-white' : 'text-[#7B1A1A]'}`}>
-                Driver
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
               onPress={() => setValue('role', 'passenger')}
               activeOpacity={0.8}
               className={`flex-1 flex-row items-center justify-center py-3 rounded-full ${role === 'passenger' ? 'bg-[#7B1A1A]' : ''}`}
             >
-              <User size={18} color={role === 'passenger' ? '#fff' : '#7B1A1A'} />
+              <UserRound size={18} color={role === 'passenger' ? '#fff' : '#7B1A1A'} />
               <Text className={`ml-2 text-[15px] font-semibold ${role === 'passenger' ? 'text-white' : 'text-[#7B1A1A]'}`}>
                 Passenger
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => setValue('role', 'driver')}
+              activeOpacity={0.8}
+              className={`flex-1 flex-row items-center justify-center py-3 rounded-full ${role === 'driver' ? 'bg-[#7B1A1A]' : ''}`}
+            >
+              <Bike size={18} color={role === 'driver' ? '#fff' : '#7B1A1A'} />
+              <Text className={`ml-2 text-[15px] font-semibold ${role === 'driver' ? 'text-white' : 'text-[#7B1A1A]'}`}>
+                Tricycle Driver
               </Text>
             </TouchableOpacity>
           </View>

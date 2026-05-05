@@ -12,8 +12,7 @@ export default function PassengerLayout() {
             <Stack.Screen 
                 name="chat/[id]"
                 options={{
-                    headerShown: true,
-                    headerTitle: "Message",
+                    headerShown: false,
                     headerTintColor: "#7B1A1A",
                     headerStyle: { backgroundColor: "#F5EFE8" }
                 }}

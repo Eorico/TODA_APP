@@ -1,5 +1,6 @@
 export type Role = 'driver' | 'passenger';
 export type Step = 'email' | 'code' | 'password';
+export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
 export type LoginFormData = {
   role: Role;

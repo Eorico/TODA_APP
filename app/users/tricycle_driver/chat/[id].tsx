@@ -1,38 +1,47 @@
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
-  Image,
-  TouchableOpacity,
-  TextInput,
-  SafeAreaView,
-  KeyboardAvoidingView,
-  Platform,
+  View, Text, TextInput, ScrollView, TouchableOpacity,
+  Image, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft, Phone, Flag, Smile, Send, Info } from 'lucide-react-native';
-import { Colors } from '@/constants/colors';
+import {
+  Phone, CircleAlert as AlertCircle, Plus, Smile,
+  Send, MapPin, ChevronLeft, CheckCheck, Info,
+} from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { conversations, chatMessages } from '@/constants/mockData';
+
+const CRIMSON = '#7B1A1A';
+const GOLD    = '#C8960C';
+const BG      = '#F5EFE8';
 
 export default function ChatDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [message, setMessage] = useState('');
 
-  const conversation = conversations.find(c => c.id === id);
-  const messages = chatMessages[id as string] || [];
+  const conversation = conversations.find(c => c.id === id) ?? conversations[0];
+  const messages     = chatMessages[id as string] ?? [];
 
   const yesterdayMessages = messages.filter(m => m.day === 'yesterday');
-  const todayMessages = messages.filter(m => m.day === 'today');
+  const todayMessages     = messages.filter(m => m.day === 'today');
 
   const renderMessage = (msg: any) => {
     if (msg.sender === 'system') {
       return (
-        <View key={msg.id} className="bg-white rounded-lg my-2 border-l-4 border-yellow-500 px-3 py-2">
+        <View
+          key={msg.id}
+          className="rounded-xl my-2 px-3 py-2.5"
+          style={{
+            backgroundColor: '#FFF8EC',
+            borderLeftWidth: 3,
+            borderLeftColor: GOLD,
+          }}
+        >
           <View className="flex-row items-center gap-2">
-            <Info size={14} color={Colors.goldDark} />
-            <Text className="text-sm font-semibold text-gray-800 flex-1">
+            <Info size={14} color={GOLD} />
+            <Text className="text-[13px] font-semibold flex-1" style={{ color: '#1A1A1A' }}>
               {msg.text}
             </Text>
           </View>
@@ -45,91 +54,129 @@ export default function ChatDetailScreen() {
     return (
       <View
         key={msg.id}
-        className={`flex-row mb-2 items-end ${isMe ? 'justify-end' : ''}`}
+        className={`mb-3 ${isMe ? 'items-end' : 'items-start'}`}
       >
         <View
-          className={`max-w-[80%] rounded-2xl p-3 pb-2 ${
-            isMe ? 'bg-blue-600 rounded-br-sm' : 'bg-gray-200 rounded-bl-sm'
-          } ${msg.highlighted ? 'border-l-4 border-yellow-500' : ''}`}
+          className={`max-w-[80%] px-4 py-3 rounded-2xl ${
+            isMe ? 'rounded-br-sm' : 'rounded-bl-sm'
+          }`}
+          style={{
+            backgroundColor: isMe ? CRIMSON : '#E5E5E5',
+            ...(msg.highlighted && {
+              borderLeftWidth: 3,
+              borderLeftColor: GOLD,
+            }),
+          }}
         >
-          <Text className={`text-sm leading-5 ${isMe ? 'text-white' : 'text-gray-800'}`}>
+          <Text
+            className="text-[15px]"
+            style={{ lineHeight: 22, color: isMe ? '#FFFFFF' : '#1A1A1A' }}
+          >
             {msg.text}
           </Text>
+        </View>
 
-          <View className="flex-row justify-end items-center mt-1 gap-1">
-            <Text className={`text-xs ${isMe ? 'text-white/70' : 'text-gray-500'}`}>
-              {msg.time}
-            </Text>
-            {isMe && msg.read && (
-              <Text className="text-xs text-white/70">✓✓</Text>
-            )}
-          </View>
+        <View
+          className={`flex-row items-center mt-1 gap-1 ${
+            isMe ? 'justify-end pr-1' : 'justify-start pl-1'
+          }`}
+        >
+          <Text className="text-[11px]" style={{ color: '#6B6059' }}>
+            {msg.time}
+          </Text>
+          {isMe && msg.read && (
+            <CheckCheck size={14} color="#999" strokeWidth={2} />
+          )}
         </View>
       </View>
     );
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-100">
+    // ← plain View instead of SafeAreaView
+    <View className="flex-1" style={{ backgroundColor: CRIMSON }}>
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
 
-      {/* HEADER */}
-      <View className="flex-row items-center px-3 py-3 bg-white border-b border-gray-200 gap-2">
+        {/* ── HEADER — top padding uses insets.top ── */}
+        <View
+          className="flex-row items-center px-4 gap-2.5"
+          style={{
+            backgroundColor: CRIMSON,
+            paddingTop: insets.top + 8,
+            paddingBottom: 12,
+          }}
+        >
+          <TouchableOpacity onPress={() => router.back()} className="p-1">
+            <ChevronLeft size={22} color="white" strokeWidth={2.5} />
+          </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.back()} className="p-1">
-          <ChevronLeft size={24} color={Colors.textPrimary} />
-        </TouchableOpacity>
-
-        <View className="flex-row items-center flex-1 gap-2">
-
-          <View className="relative">
-            {conversation?.avatar ? (
-              <Image
-                source={{ uri: conversation.avatar }}
-                className="w-11 h-11 rounded-full"
-              />
-            ) : (
-              <View className="w-11 h-11 rounded-full bg-gray-400 items-center justify-center">
-                <Text className="text-white font-bold text-lg">
-                  {conversation?.name?.[0]}
-                </Text>
-              </View>
-            )}
-
-            <View className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
+          {/* Avatar */}
+          <View
+            className="p-1 rounded-lg"
+            style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
+          >
+            <View
+              className="w-11 h-11 rounded-lg overflow-hidden"
+              style={{ backgroundColor: '#E0D8CC' }}
+            >
+              {conversation?.avatar ? (
+                <Image source={{ uri: conversation.avatar }} className="w-full h-full" />
+              ) : (
+                <View className="w-full h-full" style={{ backgroundColor: '#C8C0B4' }} />
+              )}
+            </View>
           </View>
 
-          <View>
-            <Text className="text-base font-bold text-blue-600">
-              {conversation?.name}
+          {/* Name */}
+          <View className="flex-1">
+            <Text
+              className="text-[16px] font-extrabold tracking-wide"
+              style={{ color: GOLD }}
+            >
+              {conversation?.name?.toUpperCase()}
             </Text>
-            <Text className="text-[10px] font-semibold text-gray-500 tracking-widest">
+            <Text className="text-[12px] mt-0.5" style={{ color: 'rgba(255,255,255,0.6)' }}>
               ACTIVE NOW
             </Text>
           </View>
+
+          {/* Actions */}
+          <View className="flex-row gap-3">
+            <TouchableOpacity
+              className="w-9 h-9 rounded-full items-center justify-center"
+              style={{ borderWidth: 1, borderColor: 'rgba(255,255,255,0.35)' }}
+            >
+              <Phone size={18} color="white" strokeWidth={1.8} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              className="w-9 h-9 rounded-full items-center justify-center"
+              style={{ borderWidth: 1, borderColor: 'rgba(255,255,255,0.35)' }}
+            >
+              <AlertCircle size={18} color="white" strokeWidth={1.8} />
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <View className="flex-row gap-2">
-          <TouchableOpacity className="p-2">
-            <Phone size={20} color={Colors.textPrimary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity className="p-2">
-            <Flag size={20} color={Colors.primary} />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* BODY */}
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <ScrollView className="flex-1 px-3 pt-4">
-
+        {/* ── MESSAGES ── */}
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16 }}
+          showsVerticalScrollIndicator={false}
+          style={{ backgroundColor: BG }}
+        >
           {yesterdayMessages.length > 0 && (
             <>
-              <View className="self-center bg-gray-300 px-3 py-1 rounded-full my-3">
-                <Text className="text-xs font-bold text-gray-600 tracking-widest">
+              <View
+                className="self-center px-4 py-1.5 rounded-full my-3"
+                style={{ backgroundColor: '#E8E3DE' }}
+              >
+                <Text
+                  className="text-[11px] font-semibold tracking-wide"
+                  style={{ color: '#6B6059' }}
+                >
                   YESTERDAY
                 </Text>
               </View>
@@ -139,8 +186,14 @@ export default function ChatDetailScreen() {
 
           {todayMessages.length > 0 && (
             <>
-              <View className="self-center bg-gray-300 px-3 py-1 rounded-full my-3">
-                <Text className="text-xs font-bold text-gray-600 tracking-widest">
+              <View
+                className="self-center px-4 py-1.5 rounded-full my-3"
+                style={{ backgroundColor: '#E8E3DE' }}
+              >
+                <Text
+                  className="text-[11px] font-semibold tracking-wide"
+                  style={{ color: '#6B6059' }}
+                >
                   TODAY
                 </Text>
               </View>
@@ -148,30 +201,76 @@ export default function ChatDetailScreen() {
             </>
           )}
 
+          {/* LOCATION CARD */}
+          <View
+            className="flex-row items-center rounded-xl p-3 mt-2 overflow-hidden gap-3 relative"
+            style={{ backgroundColor: '#EDE8E3' }}
+          >
+            <View
+              className="absolute left-0 top-0 bottom-0 w-1"
+              style={{ backgroundColor: GOLD }}
+            />
+            <Image
+              source={{
+                uri: 'https://images.pexels.com/photos/1366909/pexels-photo-1366909.jpeg?auto=compress&cs=tinysrgb&w=150',
+              }}
+              className="w-14 h-14 rounded-lg ml-2"
+            />
+            <View className="flex-1">
+              <Text
+                className="text-[10px] font-bold tracking-widest mb-1"
+                style={{ color: GOLD }}
+              >
+                PICKUP LOCATION
+              </Text>
+              <Text className="text-[15px] font-medium" style={{ color: '#1A1A1A' }}>
+                Av. da Liberdade, 110
+              </Text>
+            </View>
+            <MapPin size={22} color={GOLD} strokeWidth={1.8} />
+          </View>
         </ScrollView>
 
-        {/* INPUT */}
-        <View className="flex-row items-center px-3 py-3 bg-gray-100 border-t border-gray-200 gap-2">
+        {/* ── INPUT BAR — bottom padding uses insets.bottom ── */}
+        <View
+          className="flex-row items-center px-3 py-2 gap-2"
+          style={{
+            backgroundColor: '#F5F5F5',
+            borderTopWidth: 1,
+            borderTopColor: '#E0D8D0',
+            paddingBottom: insets.bottom + 8,
+          }}
+        >
+          <TouchableOpacity
+            className="w-10 h-10 rounded-full items-center justify-center"
+            style={{ backgroundColor: '#E8E3DE' }}
+          >
+            <Plus size={22} color="#444" strokeWidth={2} />
+          </TouchableOpacity>
 
           <TextInput
-            className="flex-1 text-sm text-gray-800"
-            placeholder="Mag-reply dito..."
-            placeholderTextColor={Colors.textMuted}
+            className="flex-1 rounded-full px-4 py-2 text-[15px]"
+            style={{ backgroundColor: '#E8E3DE', color: '#1A1A1A' }}
+            placeholder="Type a message..."
+            placeholderTextColor="#999"
             value={message}
             onChangeText={setMessage}
             multiline
           />
 
-          <TouchableOpacity className="p-2">
-            <Smile size={20} color={Colors.textMuted} />
+          <TouchableOpacity className="p-1">
+            <Smile size={22} color={GOLD} strokeWidth={1.8} />
           </TouchableOpacity>
 
-          <TouchableOpacity className="w-11 h-11 rounded-lg bg-yellow-500 items-center justify-center">
-            <Send size={18} color="white" />
+          <TouchableOpacity
+            className="w-10 h-10 rounded-lg items-center justify-center"
+            style={{ backgroundColor: CRIMSON }}
+          >
+            <Send size={18} color="white" strokeWidth={2} />
           </TouchableOpacity>
-
         </View>
+
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }

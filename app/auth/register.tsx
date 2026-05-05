@@ -9,14 +9,13 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ActivityIndicator,
   Image
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
-  Car,
-  User,
+  Bike,
+  UserRound,
   Hash,
   Phone,
   Upload,
@@ -27,12 +26,16 @@ import {
   Eye,
   ArrowLeft
 } from 'lucide-react-native';
-import { ENDPOINTS, API_CONFIG } from '../services/api';
+import { AUTH_ENDPOINTS, API_CONFIG } from '../../services/api';
 import { useRegistrationForm } from '@/hooks/use_register_form';
 import { Controller } from 'react-hook-form';
+import { Toast } from '@/components/toast';
+import { useToast } from '@/hooks/use_toast';
+import { Role } from '@/constants/data';
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const { toast, showToast, hideToast } = useToast();
   const {
     control,
     handleSubmit,
@@ -55,7 +58,7 @@ export default function RegisterScreen() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (status !== 'granted') {
-      Alert.alert('Permission Denied', "We need gallery access to upload your license.");
+      showToast("We need gallery access to upload your license.", 'warning');
       return;
     }
 
@@ -74,7 +77,7 @@ export default function RegisterScreen() {
   const pickOrCrImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission Denied', 'We need gallery access to upload your OR/CR.');
+      showToast('We need gallery access to upload your OR/CR.', 'warning');
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -90,6 +93,7 @@ export default function RegisterScreen() {
 
   const handleRegister = handleSubmit(async (data) => {
     try {
+      const ENDPOINTS = AUTH_ENDPOINTS(data.role as Role);
       // Validate email format via form error instead of alert
       if (!data.email.endsWith('@gmail.com')) {
         setError('email', { message: 'Only Gmail accounts are allowed.' });
@@ -150,7 +154,14 @@ export default function RegisterScreen() {
         body = formData;
         delete (headers as any)['Content-Type'];
       } else {
-        body = JSON.stringify(data);
+        const formData = new FormData();
+        formData.append('full_name', data.fullName);
+        formData.append('email', data.email);
+        formData.append('password', data.password); 
+        formData.append('contact_number', data.contact);
+
+        body = formData;
+        delete (headers as any)['Content-Type'];
       }
 
       const res = await fetch(ENDPOINTS.REGISTER, {
@@ -162,23 +173,30 @@ export default function RegisterScreen() {
       const response = await res.json();
 
       if (res.ok) {
-        Alert.alert(
-          'Success',
+        showToast(
           data.role === 'driver'
             ? 'Application submitted!'
-            : 'Account created successfully'
+            : 'Account created successfully',
+          'success'
         );
         router.replace('/auth/login');
       } else {
         throw new Error(response.detail || response.message);
       }
     } catch (error: any) {
-      Alert.alert('Registration Error', error.message);
+      showToast(error.message || 'Registration failed. Please try again.', 'error');
     }
   });
 
   return (
     <SafeAreaView className="flex-1 bg-[#F5EFE8]">
+      <Toast 
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onHide={hideToast}
+      />
+
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -198,9 +216,13 @@ export default function RegisterScreen() {
           </TouchableOpacity>
           
           {/* Logo */}
-          <View className="mb-6">
-            <View className="w-[88px] h-[88px] rounded-[20px] bg-white items-center justify-center shadow-md">
-              <Text className="text-[36px] font-black text-[#7B1A1A]">M</Text>
+          <View className="mb-6  top-3">
+            <View className="w-[98px] h-[88px] rounded-2xl bg-white items-center justify-center shadow-md">
+              <Image
+                source={require("@/assets/images/splash.png")}
+                style={{ width: 180, height: 180, borderRadius: 12 }}
+                resizeMode="contain"
+              />
             </View>
           </View>
 
@@ -229,13 +251,13 @@ export default function RegisterScreen() {
               }`}
               onPress={() => setValue('role', 'passenger')}
             >
-              <User size={18} color={role === 'passenger' ? '#FFF' : '#7B1A1A'} />
+              <UserRound size={18} color={role === 'passenger' ? '#FFF' : '#7B1A1A'} />
               <Text
                 className={`ml-2 font-bold ${
                   role === 'passenger' ? 'text-white' : 'text-[#7B1A1A]'
                 }`}
               >
-                PASSENGER
+                Passenger
               </Text>
             </TouchableOpacity>
 
@@ -246,13 +268,13 @@ export default function RegisterScreen() {
               }`}
               onPress={() => setValue('role', 'driver')}
             >
-              <Car size={18} color={role === 'driver' ? '#FFF' : '#7B1A1A'} />
+              <Bike size={18} color={role === 'driver' ? '#FFF' : '#7B1A1A'} />
               <Text
                 className={`ml-2 font-bold ${
                   role === 'driver' ? 'text-white' : 'text-[#7B1A1A]'
                 }`}
               >
-                DRIVER
+                Tricycle Driver
               </Text>
             </TouchableOpacity>
           </View>
@@ -277,7 +299,7 @@ export default function RegisterScreen() {
                   />
                 )}
               />
-              <User size={18} color="#B0A8A0" />
+              <UserRound size={18} color="#B0A8A0" />
             </View>
             {errors.fullName && (
               <Text className="text-[12px] text-[#FF0000] mt-1">
@@ -308,7 +330,7 @@ export default function RegisterScreen() {
                   />
                 )}
               />
-              <User size={18} color="#B0A8A0" />
+              <UserRound size={18} color="#B0A8A0" />
             </View>
             {errors.email && (
               <Text className="text-[12px] text-[#FF0000] mt-1">

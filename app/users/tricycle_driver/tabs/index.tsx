@@ -1,250 +1,342 @@
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
-  Image,
-  TouchableOpacity,
+  View, Text, ScrollView, Image, TouchableOpacity,
   TextInput,
-  SafeAreaView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
-  Phone,
-  Flag,
-  Search,
-  ChevronDown,
-  PenLine,
-  Calendar,
+  Search, PenLine, Phone, Flag,
+  Bell, Edit3,
 } from 'lucide-react-native';
-
-import AppHeader from '@/components/app_header';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { currentUser, conversations } from '@/constants/mockData';
 
-function AvatarWithBadge({
-  uri,
-  isMissedCall,
-  isSupport,
-}: {
-  uri?: string | null;
-  isMissedCall?: boolean;
-  isSupport?: boolean;
-}) {
-  return (
-    <View className="relative">
+const CRIMSON = '#7B1A1A';
+const BG      = '#F5EFE8';
+const GOLD    = '#C8960C';
 
+function Avatar({
+  uri, isSupport, isMissedCall, name,
+}: { uri?: string | null; isSupport?: boolean; isMissedCall?: boolean; name?: string }) {
+  const initials = name ? name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '?';
+
+  return (
+    <View style={{ position: 'relative', width: 54, height: 54 }}>
       {uri ? (
-        <Image
-          source={{ uri }}
-          className="w-14 h-14 rounded-xl bg-gray"
-        />
+        <Image source={{ uri }} style={{ width: 50, height: 50, borderRadius: 25 }} />
       ) : isSupport ? (
-        <View className="w-14 h-14 rounded-xl bg-gold items-center justify-center">
-          <Text className="text-white font-bold text-xl">@</Text>
+        <View style={{
+          width: 50, height: 50, borderRadius: 25,
+          backgroundColor: GOLD, alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Text style={{ color: '#fff', fontWeight: '800', fontSize: 18 }}>@</Text>
         </View>
       ) : (
-        <View className="w-14 h-14 rounded-xl bg-gray" />
-      )}
-
-      {isMissedCall && (
-        <View className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-primary border-2 border-white items-center justify-center">
-          <Phone size={9} color="#fff" />
+        <View style={{
+          width: 50, height: 50, borderRadius: 25,
+          backgroundColor: CRIMSON + '33', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Text style={{ color: CRIMSON, fontWeight: '800', fontSize: 16 }}>{initials}</Text>
         </View>
       )}
 
+      {isMissedCall ? (
+        <View style={{
+          position: 'absolute', bottom: 0, right: 0,
+          width: 16, height: 16, borderRadius: 8,
+          backgroundColor: CRIMSON, borderWidth: 2, borderColor: BG,
+          alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Phone size={7} color="#fff" />
+        </View>
+      ) : (
+        <View style={{
+          position: 'absolute', bottom: 1, right: 1,
+          width: 13, height: 13, borderRadius: 7,
+          backgroundColor: '#22C55E', borderWidth: 2, borderColor: BG,
+        }} />
+      )}
+    </View>
+  );
+}
+
+function ConversationRow({ conv, onPress }: { conv: any; onPress: () => void }) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.7}
+      style={{
+        flexDirection: 'row', alignItems: 'center',
+        paddingHorizontal: 16, paddingVertical: 10, gap: 12,
+        backgroundColor: conv.unread ? '#FDF6F0' : 'transparent',
+        borderBottomWidth: 0.5, borderBottomColor: '#EDE7DF',
+      }}
+    >
+      <Avatar
+        uri={conv.avatar}
+        isMissedCall={conv.missedCall}
+        isSupport={conv.isSupport}
+        name={conv.name}
+      />
+      <View style={{ flex: 1 }}>
+        <View style={{
+          flexDirection: 'row', justifyContent: 'space-between',
+          alignItems: 'center', marginBottom: 3,
+        }}>
+          <Text style={{
+            fontSize: 15,
+            fontWeight: conv.unread ? '800' : '600',
+            color: '#1A1A1A',
+          }}>
+            {conv.name}
+          </Text>
+          <Text style={{
+            fontSize: 11,
+            color: conv.unread ? CRIMSON : '#9A8E85',
+            fontWeight: conv.unread ? '700' : '400',
+          }}>
+            {conv.time}
+          </Text>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Text
+            numberOfLines={1}
+            style={{
+              flex: 1, fontSize: 13,
+              color: conv.unread ? '#3A3A3A' : '#9A8E85',
+              fontWeight: conv.unread ? '500' : '400',
+            }}
+          >
+            {conv.lastMessage}
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+            {conv.unread && (
+              <View style={{
+                minWidth: 20, height: 20, borderRadius: 10,
+                backgroundColor: CRIMSON, alignItems: 'center',
+                justifyContent: 'center', paddingHorizontal: 5,
+              }}>
+                <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>1</Text>
+              </View>
+            )}
+            <Flag size={13} color="#C8B8AF" />
+          </View>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+function SectionLabel({ label }: { label: string }) {
+  return (
+    <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4, backgroundColor: BG }}>
+      <Text style={{ fontSize: 11, fontWeight: '800', letterSpacing: 1.2, color: '#9A8E85' }}>
+        {label}
+      </Text>
     </View>
   );
 }
 
 export default function ChatScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [search, setSearch] = useState('');
 
-  const today = conversations.filter(c => c.section === 'today');
+  const today     = conversations.filter(c => c.section === 'today');
   const yesterday = conversations.filter(c => c.section === 'yesterday');
 
+  const filtered = (list: typeof conversations) =>
+    search.trim()
+      ? list.filter(c =>
+          c.name.toLowerCase().includes(search.toLowerCase()) ||
+          (c as any).lastMessage?.toLowerCase().includes(search.toLowerCase())
+        )
+      : list;
+
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <View style={{ flex: 1, backgroundColor: BG }}>
 
-      <AppHeader
-        title="Ricardo Santos"
-        subtitle="BODY #2948-TP"
-        avatarUrl={currentUser.avatar}
-      />
-
-      {/* FILTER ROW */}
-      <View className="flex-row items-center justify-between px-4 pt-4 pb-3">
-
-        <Text className="text-[26px] font-black italic text-primary tracking-widest">
-          ALL MESSAGES
+      {/* ── HEADER ── */}
+      <View style={{
+        backgroundColor: CRIMSON,
+        paddingHorizontal: 16,
+        paddingTop: 14,
+        paddingBottom: 16,
+        marginTop: 30,
+      }}>
+        <Text style={{
+          color: GOLD, fontSize: 10, fontWeight: '700',
+          letterSpacing: 0.8, marginBottom: 6,
+        }}>
+          MAMTTODA
         </Text>
-
-        <TouchableOpacity className="flex-row items-center gap-1 bg-border px-3 py-2 rounded-full">
-
-          <Calendar size={14} color="#666" />
-          <Text className="text-[11px] font-semibold text-textSecondary">
-            LAST MONTH
-          </Text>
-          <ChevronDown size={14} color="#666" />
-
-        </TouchableOpacity>
-
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <View style={{ position: 'relative' }}>
+              <Image
+                source={{ uri: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=100' }}
+                style={{ width: 40, height: 40, borderRadius: 20 }}
+              />
+              <View style={{
+                position: 'absolute', bottom: 0, right: 0,
+                width: 12, height: 12, borderRadius: 6,
+                backgroundColor: '#22C55E', borderWidth: 2, borderColor: CRIMSON,
+              }} />
+            </View>
+            <View>
+              <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '800' }}>
+                Mikel Santiago
+              </Text>
+              <Text style={{ color: 'rgba(255,255,255,0.55)', fontSize: 11, marginTop: 1 }}>
+                Tricycle Driver · Stay informed  {/* ← driver-specific */}
+              </Text>
+            </View>
+          </View>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <TouchableOpacity style={{
+              width: 36, height: 36, borderRadius: 18,
+              alignItems: 'center', justifyContent: 'center',
+              backgroundColor: 'rgba(255,255,255,0.15)',
+            }}>
+              <Bell size={18} color="white" strokeWidth={1.8} />
+            </TouchableOpacity>
+            <TouchableOpacity style={{
+              width: 36, height: 36, borderRadius: 18,
+              alignItems: 'center', justifyContent: 'center',
+              backgroundColor: 'rgba(255,255,255,0.15)',
+            }}>
+              <Edit3 size={18} color="white" strokeWidth={1.8} />
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
 
-      {/* SEARCH */}
-      <View className="flex-row items-center bg-border mx-4 mb-3 px-4 py-2 rounded-full gap-2">
-
-        <Search size={16} color="#999" />
-
+      {/* ── SEARCH BAR ── */}
+      <View style={{
+        flexDirection: 'row', alignItems: 'center',
+        marginHorizontal: 16, marginTop: 10, marginBottom: 0,
+        paddingHorizontal: 14, paddingVertical: 8,
+        borderRadius: 22, backgroundColor: '#EDE7DF', gap: 8,
+      }}>
+        <Search size={15} color="#9A8E85" />
         <TextInput
-          className="flex-1 text-[14px] text-textPrimary"
-          placeholder="Search messages, names, or issues..."
-          placeholderTextColor="#999"
+          style={{ flex: 1, fontSize: 14, color: '#1A1A1A' }}
+          placeholder="Search"
+          placeholderTextColor="#9A8E85"
           value={search}
           onChangeText={setSearch}
         />
-
       </View>
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-
-        {/* TODAY */}
-        {today.map((conv) => (
-          <TouchableOpacity
-            key={conv.id}
-            onPress={() => router.push(`/chat/${conv.id}`)}
-            className={`flex-row items-center gap-3 px-4 py-3 border-b border-border ${
-              conv.unread ? 'bg-unreadBg' : 'bg-white'
-            }`}
-          >
-
-            <AvatarWithBadge
-              uri={conv.avatar}
-              isMissedCall={conv.missedCall}
-              isSupport={conv.isSupport}
-            />
-
-            <View className="flex-1 gap-1">
-
-              <View className="flex-row justify-between items-center">
-
-                <Text className="text-[15px] font-bold text-textPrimary">
-                  {conv.name}
-                </Text>
-
-                <Text
-                  className={`text-[12px] ${
-                    conv.missedCall
-                      ? 'text-primary font-semibold'
-                      : 'text-textSecondary'
-                  }`}
-                >
-                  {conv.time}
-                </Text>
-
-              </View>
-
-              <View className="flex-row justify-between items-center">
-
-                <Text
-                  numberOfLines={1}
-                  className={`flex-1 text-[13px] mr-2 ${
-                    conv.missedCall
-                      ? 'text-primary italic'
-                      : conv.unread
-                      ? 'text-primary font-medium'
-                      : 'text-textSecondary'
-                  }`}
-                >
-                  {conv.lastMessage}
-                </Text>
-
-                <View className="flex-row items-center gap-2">
-
-                  {conv.unread && (
-                    <View className="w-2 h-2 rounded-full bg-primary" />
-                  )}
-
-                  <Flag size={14} color="#999" />
-
-                </View>
-
-              </View>
-
-            </View>
-
-          </TouchableOpacity>
-        ))}
-
-        {/* YESTERDAY LABEL */}
-        <View className="px-4 py-2 bg-background">
-          <Text className="text-[11px] font-bold text-textSecondary tracking-widest">
-            YESTERDAY
+      {/* ── ACTIVE NOW STRIP ── */}
+      <View>
+        <View style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 2 }}>
+          <Text style={{ fontSize: 11, fontWeight: '800', letterSpacing: 1, color: '#9A8E85' }}>
+            ACTIVE NOW
           </Text>
         </View>
-
-        {/* YESTERDAY */}
-        {yesterday.map((conv) => (
-          <TouchableOpacity
-            key={conv.id}
-            onPress={() => router.push(`/chat/${conv.id}`)}
-            className={`flex-row items-center gap-3 px-4 py-3 border-b border-border ${
-              conv.unread ? 'bg-unreadBg' : 'bg-white'
-            }`}
-          >
-
-            <AvatarWithBadge
-              uri={conv.avatar}
-              isMissedCall={conv.missedCall}
-              isSupport={conv.isSupport}
-            />
-
-            <View className="flex-1 gap-1">
-
-              <View className="flex-row justify-between items-center">
-
-                <Text className="text-[15px] font-bold text-textPrimary">
-                  {conv.name}
-                </Text>
-
-                <Text className="text-[12px] text-textSecondary">
-                  {conv.time}
-                </Text>
-
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8, gap: 16 }}
+        >
+          {conversations.slice(0, 6).map((conv) => (
+            <TouchableOpacity
+              key={conv.id}
+              onPress={() => router.push(`/users/tricycle_driver/chat/${conv.id}` as any)}
+              style={{ alignItems: 'center', gap: 4 }}
+            >
+              <View style={{ position: 'relative' }}>
+                {conv.avatar ? (
+                  <Image
+                    source={{ uri: conv.avatar }}
+                    style={{ width: 48, height: 48, borderRadius: 24 }}
+                  />
+                ) : (
+                  <View style={{
+                    width: 48, height: 48, borderRadius: 24,
+                    backgroundColor: CRIMSON + '22',
+                    alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Text style={{ color: CRIMSON, fontWeight: '800', fontSize: 15 }}>
+                      {conv.name[0]}
+                    </Text>
+                  </View>
+                )}
+                <View style={{
+                  position: 'absolute', bottom: 1, right: 1,
+                  width: 12, height: 12, borderRadius: 6,
+                  backgroundColor: '#22C55E', borderWidth: 2, borderColor: BG,
+                }} />
               </View>
+              <Text
+                numberOfLines={1}
+                style={{ fontSize: 11, color: '#5A4E47', fontWeight: '500', maxWidth: 48 }}
+              >
+                {conv.name.split(' ')[0]}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
 
-              <View className="flex-row justify-between items-center">
+      {/* ── DIVIDER ── */}
+      <View style={{ height: 1, backgroundColor: '#E8E0D8', marginHorizontal: 16, marginBottom: 2 }} />
 
-                <Text numberOfLines={1} className="flex-1 text-[13px] text-textSecondary mr-2">
-                  {conv.lastMessage}
-                </Text>
+      {/* ── CONVERSATIONS ── */}
+      <ScrollView
+        style={{ flex: 1 }}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 70 }}
+      >
+        {filtered(today).length > 0 && (
+          <>
+            <SectionLabel label="TODAY" />
+            {filtered(today).map((conv) => (
+              <ConversationRow
+                key={conv.id}
+                conv={conv}
+                onPress={() => router.push(`/users/tricycle_driver/chat/${conv.id}` as any)}
+              />
+            ))}
+          </>
+        )}
 
-                <View className="flex-row items-center gap-2">
+        {filtered(yesterday).length > 0 && (
+          <>
+            <SectionLabel label="YESTERDAY" />
+            {filtered(yesterday).map((conv) => (
+              <ConversationRow
+                key={conv.id}
+                conv={conv}
+                onPress={() => router.push(`/users/tricycle_driver/chat/${conv.id}` as any)}
+              />
+            ))}
+          </>
+        )}
 
-                  {conv.unread && (
-                    <View className="w-2 h-2 rounded-full bg-primary" />
-                  )}
-
-                  <Flag size={14} color="#999" />
-
-                </View>
-
-              </View>
-
-            </View>
-
-          </TouchableOpacity>
-        ))}
-
+        {filtered(today).length === 0 && filtered(yesterday).length === 0 && (
+          <View style={{ alignItems: 'center', paddingTop: 60, gap: 8 }}>
+            <Search size={36} color="#C8B8AF" />
+            <Text style={{ color: '#9A8E85', fontSize: 15, fontWeight: '600' }}>No results found</Text>
+            <Text style={{ color: '#C8B8AF', fontSize: 13 }}>Try a different name or message</Text>
+          </View>
+        )}
       </ScrollView>
 
-      {/* FLOATING BUTTON */}
-      <TouchableOpacity className="absolute bottom-20 right-5 w-14 h-14 rounded-xl bg-primary items-center justify-center shadow-lg">
-
+      {/* ── FAB ── */}
+      <TouchableOpacity
+        style={{
+          position: 'absolute', right: 20, bottom: insets.bottom + 70,
+          width: 56, height: 56, borderRadius: 28,
+          backgroundColor: CRIMSON, alignItems: 'center', justifyContent: 'center',
+          shadowColor: CRIMSON, shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.4, shadowRadius: 8, elevation: 8,
+        }}
+      >
         <PenLine size={22} color="#fff" />
-
       </TouchableOpacity>
 
-    </SafeAreaView>
+    </View>
   );
 }

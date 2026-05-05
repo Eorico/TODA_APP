@@ -1,285 +1,467 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  SafeAreaView,
+  View, Text, ScrollView, TouchableOpacity,
+  SafeAreaView, StatusBar, Platform,
 } from 'react-native';
 import {
-  Calendar,
-  FileText,
-  Search,
-  Package,
-  ChevronRight,
-  Wallet,
-  Key,
-  Smartphone,
+  Calendar, FileText, Search, Package,
+  ChevronRight, Wallet, Key, Smartphone,
+  Megaphone, Shield,
 } from 'lucide-react-native';
-import AppHeader from '@/components/app_header';
 import { events, agendas, fareMatrix, lostFound } from '@/constants/mockData';
 
-const navItems = [
-  { label: 'EVENTS', icon: <Calendar size={24} color="#0066FF" /> },
-  { label: 'FARE MATRIX', icon: <Wallet size={24} color="#0066FF" /> },
-  { label: 'AGENDAS', icon: <FileText size={24} color="#0066FF" /> },
-  { label: 'LOST & FOUND', icon: <Search size={24} color="#0066FF" /> },
+const CRIMSON = '#7B1A1A';
+const GOLD    = '#C8960C';
+const BG      = '#F5EFE8';
+const CARD    = '#FFFFFF';
+
+const OFFICERS = [
+  { name: 'Ricardo Santos',  role: 'President',      initial: 'RS' },
+  { name: 'Maria Dela Cruz', role: 'Vice President',  initial: 'MD' },
+  { name: 'Jose Reyes',      role: 'Secretary',       initial: 'JR' },
+  { name: 'Ana Bonifacio',   role: 'Treasurer',       initial: 'AB' },
+  { name: 'Pedro Lim',       role: 'Auditor',         initial: 'PL' },
+  { name: 'Luz Villanueva',  role: 'PRO',             initial: 'LV' },
+];
+
+const ANNOUNCEMENTS = [
+  {
+    tag: 'TODA NOTICE',
+    date: 'Today',
+    title: 'Holiday Schedule Update',
+    body: 'Operations will be limited on May 12. Reduced routes apply in all zones.',
+    isNew: true,
+  },
+  {
+    tag: 'SAFETY',
+    date: 'May 3',
+    title: 'Helmet Policy Reminder',
+    body: 'All drivers are reminded to ensure passengers wear helmets during the entire ride.',
+    isNew: false,
+  },
 ];
 
 function getLostFoundIcon(icon: string) {
+  const color = '#888';
   switch (icon) {
-    case 'wallet':
-      return <Wallet size={20} color="#666" />;
-    case 'key':
-      return <Key size={20} color="#666" />;
-    case 'smartphone':
-      return <Smartphone size={20} color="#666" />;
-    default:
-      return <Package size={20} color="#666" />;
+    case 'wallet':     return <Wallet     size={18} color={color} />;
+    case 'key':        return <Key        size={18} color={color} />;
+    case 'smartphone': return <Smartphone size={18} color={color} />;
+    default:           return <Package    size={18} color={color} />;
   }
 }
 
-export default function BulletinScreen() {
+function SectionHeader({
+  icon,
+  title,
+  sub,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  sub?: string;
+}) {
   return (
-    <SafeAreaView className="flex-1 bg-background">
-
-      <AppHeader
-        title="TRIKEDRIVE PRO"
-        avatarUrl="https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg"
-      />
-
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-
-        {/* NAVIGATION */}
-        <View className="bg-white py-4 px-4 mb-2">
-
-          <Text className="text-[10px] font-semibold text-textMuted tracking-widest mb-3">
-            BULLETIN BOARD NAVIGATION
+    <View className="flex-row items-center mb-3" style={{ gap: 8 }}>
+      <View
+        className="w-8 h-8 rounded-lg items-center justify-center"
+        style={{ backgroundColor: '#F0E8E4' }}
+      >
+        {icon}
+      </View>
+      <View>
+        <Text className="text-[15px] font-extrabold tracking-wide" style={{ color: CRIMSON }}>
+          {title}
+        </Text>
+        {sub && (
+          <Text className="text-[10px]" style={{ color: '#A89880' }}>
+            {sub}
           </Text>
+        )}
+      </View>
+    </View>
+  );
+}
 
-          <View className="flex-row flex-wrap justify-between gap-3">
+export default function BulletinScreen() {
+  const [activeNav, setActiveNav] = useState<string | null>(null);
 
+  const navItems = [
+    { id: 'events',   label: 'Events',       icon: <Calendar  size={20} color={CRIMSON} /> },
+    { id: 'fare',     label: 'Fare\nMatrix',  icon: <Wallet    size={20} color={CRIMSON} /> },
+    { id: 'officers', label: 'Officers',      icon: <Shield    size={20} color={CRIMSON} /> },
+    { id: 'agendas',  label: 'Agendas',       icon: <FileText  size={20} color={CRIMSON} /> },
+    { id: 'lost',     label: 'Lost &\nFound', icon: <Search    size={20} color={CRIMSON} /> },
+  ];
+
+  return (
+    <SafeAreaView className="flex-1" style={{ backgroundColor: BG }}>
+      <StatusBar barStyle="light-content" backgroundColor={CRIMSON} />
+
+      {/* ── HEADER ── */}
+      <View
+        style={{
+          backgroundColor: CRIMSON,
+          paddingHorizontal: 16,
+          paddingTop: 14,
+          paddingBottom: 16,
+          marginTop: 30,
+        }}
+      >
+        <Text style={{ color: GOLD, fontSize: 10, fontWeight: '700', letterSpacing: 0.8, marginBottom: 2 }}>
+          MAMTTODA
+        </Text>
+        <Text style={{ color: '#FFFFFF', fontSize: 20, fontWeight: '800' }}>
+          Driver Bulletin
+        </Text>
+        <Text style={{ color: 'rgba(255,255,255,0.55)', fontSize: 12, marginTop: 2 }}>
+          Stay informed · Drive safe
+        </Text>
+      </View>
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingBottom: Platform.OS === 'ios' ? 100 : 86,
+        }}
+      >
+
+        {/* ── QUICK NAV ── */}
+        <View className="px-4 pt-4 pb-4 mb-2" style={{ backgroundColor: CARD }}>
+          <Text
+            className="text-[10px] font-semibold tracking-widest mb-3"
+            style={{ color: '#A89880' }}
+          >
+            QUICK ACCESS
+          </Text>
+          <View className="flex-row flex-wrap justify-between" style={{ gap: 8 }}>
             {navItems.map((item) => (
               <TouchableOpacity
-                key={item.label}
-                className="w-[46%] items-center gap-2 py-3 bg-background rounded-xl"
+                key={item.id}
+                onPress={() => setActiveNav(item.id)}
+                className="items-center py-3 rounded-xl"
+                style={{
+                  width: '18%',
+                  gap: 6,
+                  backgroundColor: activeNav === item.id ? '#F0E8E4' : BG,
+                }}
               >
-                <View className="w-12 h-12 rounded-xl bg-primaryLight items-center justify-center">
+                <View
+                  className="w-10 h-10 rounded-xl items-center justify-center"
+                  style={{
+                    backgroundColor: activeNav === item.id ? '#E8D8D0' : CARD,
+                    borderWidth: 0.5,
+                    borderColor: '#E0D8D0',
+                  }}
+                >
                   {item.icon}
                 </View>
-
-                <Text className="text-[11px] font-bold text-textPrimary tracking-wide">
+                <Text
+                  className="text-[9px] font-bold text-center"
+                  style={{ color: '#1A1A1A', lineHeight: 13 }}
+                >
                   {item.label}
                 </Text>
               </TouchableOpacity>
             ))}
-
           </View>
         </View>
 
-        {/* EVENTS */}
-        <View className="bg-white px-4 pt-4 pb-5 mb-2">
+        {/* ── ANNOUNCEMENTS ── */}
+        <View className="px-4 pt-4 pb-4 mb-2" style={{ backgroundColor: CARD }}>
+          <SectionHeader
+            icon={<Megaphone size={16} color={CRIMSON} />}
+            title="Announcements"
+          />
+          {ANNOUNCEMENTS.map((item, idx) => (
+            <View
+              key={idx}
+              className="rounded-xl p-3"
+              style={{
+                backgroundColor: BG,
+                marginBottom: idx < ANNOUNCEMENTS.length - 1 ? 8 : 0,
+                borderLeftWidth: 3,
+                borderLeftColor: item.isNew ? GOLD : '#D0C8C0',
+              }}
+            >
+              <View className="flex-row justify-between mb-1">
+                <Text
+                  className="text-[9px] font-bold tracking-wide"
+                  style={{ color: '#A89880' }}
+                >
+                  {item.tag} · {item.date}
+                </Text>
+                {item.isNew && (
+                  <View className="rounded-full px-2 py-0.5" style={{ backgroundColor: GOLD }}>
+                    <Text className="text-[9px] font-bold" style={{ color: '#4A2800' }}>
+                      NEW
+                    </Text>
+                  </View>
+                )}
+              </View>
+              <Text className="text-[14px] font-bold mb-1" style={{ color: '#1A1A1A' }}>
+                {item.title}
+              </Text>
+              <Text className="text-[12px]" style={{ color: '#6B6059', lineHeight: 17 }}>
+                {item.body}
+              </Text>
+            </View>
+          ))}
+        </View>
 
-          <View className="flex-row items-center gap-2 mb-3">
-            <Calendar size={18} color="#0066FF" />
-            <Text className="text-[16px] font-black text-primary tracking-wide">
-              DRIVER EVENTS
-            </Text>
-          </View>
-
+        {/* ── DRIVER EVENTS ── */}
+        <View className="px-4 pt-4 pb-4 mb-2" style={{ backgroundColor: CARD }}>
+          <SectionHeader
+            icon={<Calendar size={16} color={CRIMSON} />}
+            title="Driver Events"
+          />
           {events.map((event, idx) => (
             <TouchableOpacity
               key={idx}
-              className="flex-row items-center justify-between py-3 border-b border-border"
+              className="flex-row items-center justify-between py-3"
+              style={{
+                borderBottomWidth: idx < events.length - 1 ? 0.5 : 0,
+                borderBottomColor: '#EDE7DE',
+              }}
             >
               <View className="flex-1">
-                <Text className="text-[10px] font-bold text-textMuted tracking-widest">
+                <Text
+                  className="text-[10px] font-bold tracking-widest"
+                  style={{ color: '#A89880' }}
+                >
                   {event.date}
                 </Text>
-
-                <Text className="text-[15px] font-bold text-textPrimary mt-1">
+                <Text className="text-[14px] font-bold mt-1" style={{ color: '#1A1A1A' }}>
                   {event.title}
                 </Text>
-
-                <Text className="text-[12px] text-textSecondary mt-1">
+                <Text
+                  className="text-[12px] mt-1"
+                  style={{ color: '#6B6059', lineHeight: 17 }}
+                >
                   {event.description}
                 </Text>
               </View>
-
-              <ChevronRight size={16} color="#999" />
+              <ChevronRight size={14} color="#C0B8B0" />
             </TouchableOpacity>
           ))}
-
         </View>
 
-        {/* AGENDA */}
-        <View className="bg-white px-4 pt-4 pb-5 mb-2">
-
-          <View className="flex-row items-center gap-2 mb-3">
-            <FileText size={18} color="#0066FF" />
-            <Text className="text-[16px] font-black text-primary tracking-wide">
-              AGENDAS & MINUTES
-            </Text>
-          </View>
-
-          <View className="bg-background rounded-xl overflow-hidden">
-
-            {agendas.map((agenda, idx) => (
-              <TouchableOpacity
-                key={idx}
-                className={`flex-row items-center gap-3 p-3 ${
-                  idx !== agendas.length - 1 ? 'border-b border-border' : ''
-                }`}
+        {/* ── FARE MATRIX ── */}
+        <View className="px-4 pt-4 pb-4 mb-2" style={{ backgroundColor: CARD }}>
+          <SectionHeader
+            icon={<Wallet size={16} color={CRIMSON} />}
+            title="Fare Matrix"
+            sub="Rev. #2023-F4 · Updated March 2024"
+          />
+          <View
+            className="rounded-xl overflow-hidden"
+            style={{ borderWidth: 0.5, borderColor: '#E0D8D0' }}
+          >
+            <View className="flex-row px-3 py-2" style={{ backgroundColor: CRIMSON }}>
+              <Text
+                className="text-[10px] font-bold"
+                style={{ flex: 1.5, color: 'rgba(255,255,255,0.75)' }}
               >
-                <View className="w-9 h-9 rounded-lg bg-white items-center justify-center border border-border">
-                  <FileText size={18} color="#666" />
-                </View>
-
-                <View className="flex-1">
-                  <Text className="text-[13px] font-bold text-textPrimary">
-                    {agenda.title}
-                  </Text>
-
-                  <Text className="text-[10px] text-textMuted tracking-wide">
-                    {agenda.postedAgo} · {agenda.fileSize}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-
-          </View>
-        </View>
-
-        {/* FARE MATRIX */}
-        <View className="bg-white px-4 pt-4 pb-5 mb-2">
-
-          <View className="flex-row items-center gap-2 mb-2">
-            <Wallet size={18} color="#0066FF" />
-
-            <View>
-              <Text className="text-[16px] font-black text-primary tracking-wide">
-                UPDATED FARE MATRIX
+                DISTANCE
               </Text>
-              <Text className="text-[10px] text-textMuted">
-                REVISION ID: #2023-F4
+              <Text className="flex-1 text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                REGULAR
               </Text>
-            </View>
-          </View>
-
-          <View className="border border-border rounded-xl overflow-hidden">
-
-            {/* HEADER */}
-            <View className="flex-row bg-background px-3 py-2 border-b border-border">
-              <Text className="flex-[1.5] text-[9px] font-bold text-textSecondary">
-                DISTANCE RANGE
-              </Text>
-              <Text className="flex-1 text-[9px] font-bold text-textSecondary">
-                BASE FARE
-              </Text>
-              <Text className="flex-1 text-[9px] font-bold text-textSecondary">
+              <Text className="flex-1 text-[10px] font-bold" style={{ color: GOLD }}>
                 SENIOR/PWD
               </Text>
-              <Text className="flex-1 text-[9px] font-bold text-textSecondary">
-                ACTION
-              </Text>
             </View>
-
             {fareMatrix.map((row, idx) => (
               <View
                 key={idx}
-                className="flex-row px-3 py-3 border-b border-border items-center"
+                className="flex-row px-3 items-center"
+                style={{
+                  paddingVertical: 11,
+                  backgroundColor: idx % 2 === 0 ? CARD : BG,
+                  borderTopWidth: 0.5,
+                  borderTopColor: '#EDE7DE',
+                }}
               >
-                <Text className="flex-[1.5] font-bold text-textPrimary">
+                <Text
+                  className="font-bold text-[13px]"
+                  style={{ flex: 1.5, color: '#1A1A1A' }}
+                >
                   {row.range}
                 </Text>
-                <Text className="flex-1 text-textPrimary">
+                <Text className="flex-1 text-[13px]" style={{ color: '#1A1A1A' }}>
                   {row.base}
                 </Text>
-                <Text className="flex-1 text-textPrimary">
+                <Text className="flex-1 text-[13px] font-semibold" style={{ color: CRIMSON }}>
                   {row.seniorPwd}
                 </Text>
-                <Text className="flex-1 text-textMuted">···</Text>
               </View>
             ))}
-
-            <Text className="text-[10px] text-textMuted italic px-3 py-2">
-              *fares are subject to change during peak hours (17:00–19:00)
-            </Text>
-
+            <View style={{ backgroundColor: '#FFF8EC', paddingHorizontal: 12, paddingVertical: 7 }}>
+              <Text className="text-[10px] italic" style={{ color: '#A89880' }}>
+                Peak hour surcharge applies 17:00–19:00
+              </Text>
+            </View>
           </View>
         </View>
 
-        {/* LOST & FOUND */}
-        <View className="bg-white px-4 pt-4 pb-8">
+        {/* ── CURRENT OFFICERS ── */}
+        <View className="px-4 pt-4 pb-4 mb-2" style={{ backgroundColor: CARD }}>
+          <SectionHeader
+            icon={<Shield size={16} color={CRIMSON} />}
+            title="Current Officers"
+            sub="MAMTTODA Board · 2024–2025"
+          />
+          {OFFICERS.map((officer, idx) => (
+            <View
+              key={idx}
+              className="flex-row items-center py-3"
+              style={{
+                borderBottomWidth: idx < OFFICERS.length - 1 ? 0.5 : 0,
+                borderBottomColor: '#EDE7DE',
+              }}
+            >
+              {/* Avatar */}
+              <View
+                className="w-10 h-10 rounded-xl items-center justify-center mr-3"
+                style={{
+                  backgroundColor: idx === 0 ? CRIMSON : '#F0E8E4',
+                }}
+              >
+                <Text
+                  className="text-[12px] font-bold"
+                  style={{ color: idx === 0 ? GOLD : CRIMSON }}
+                >
+                  {officer.initial}
+                </Text>
+              </View>
 
-          <View className="flex-row items-center gap-2 mb-3">
-            <Search size={18} color="#0066FF" />
-            <Text className="text-[16px] font-black text-primary">
-              LOST & FOUND
-            </Text>
+              {/* Name & Role */}
+              <View className="flex-1">
+                <Text className="text-[14px] font-bold" style={{ color: '#1A1A1A' }}>
+                  {officer.name}
+                </Text>
+                <Text className="text-[11px] mt-0.5" style={{ color: '#A89880' }}>
+                  {officer.role}
+                </Text>
+              </View>
+
+              {/* President badge */}
+              {idx === 0 && (
+                <View
+                  className="rounded-full px-2 py-1"
+                  style={{ backgroundColor: '#F0E8E4' }}
+                >
+                  <Text className="text-[9px] font-bold" style={{ color: CRIMSON }}>
+                    PRESIDENT
+                  </Text>
+                </View>
+              )}
+            </View>
+          ))}
+        </View>
+
+        {/* ── AGENDAS & MINUTES ── */}
+        <View className="px-4 pt-4 pb-4 mb-2" style={{ backgroundColor: CARD }}>
+          <SectionHeader
+            icon={<FileText size={16} color={CRIMSON} />}
+            title="Agendas & Minutes"
+          />
+          <View className="rounded-xl overflow-hidden" style={{ backgroundColor: BG }}>
+            {agendas.map((agenda, idx) => (
+              <TouchableOpacity
+                key={idx}
+                className="flex-row items-center p-3"
+                style={{
+                  gap: 12,
+                  borderBottomWidth: idx < agendas.length - 1 ? 0.5 : 0,
+                  borderBottomColor: '#E0D8D0',
+                }}
+              >
+                <View
+                  className="w-9 h-9 rounded-lg items-center justify-center"
+                  style={{
+                    backgroundColor: CARD,
+                    borderWidth: 0.5,
+                    borderColor: '#E0D8D0',
+                  }}
+                >
+                  <FileText size={16} color="#888" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-[13px] font-bold" style={{ color: '#1A1A1A' }}>
+                    {agenda.title}
+                  </Text>
+                  <Text className="text-[10px] mt-0.5" style={{ color: '#A89880' }}>
+                    {agenda.postedAgo} · {agenda.fileSize}
+                  </Text>
+                </View>
+                <ChevronRight size={14} color="#C0B8B0" />
+              </TouchableOpacity>
+            ))}
           </View>
+        </View>
 
+        {/* ── LOST & FOUND ── */}
+        <View className="px-4 pt-4 pb-4" style={{ backgroundColor: CARD }}>
+          <SectionHeader
+            icon={<Search size={16} color={CRIMSON} />}
+            title="Lost & Found"
+          />
           {lostFound.map((item) => (
-            <View key={item.id} className="bg-background rounded-xl p-3 mb-3">
-
+            <View
+              key={item.id}
+              className="rounded-xl p-3 mb-2"
+              style={{ backgroundColor: BG }}
+            >
               <View className="flex-row justify-between mb-2">
-
-                <View className="w-11 h-11 rounded-xl bg-white border border-border items-center justify-center">
+                <View
+                  className="w-10 h-10 rounded-xl items-center justify-center"
+                  style={{
+                    backgroundColor: CARD,
+                    borderWidth: 0.5,
+                    borderColor: '#E0D8D0',
+                  }}
+                >
                   {getLostFoundIcon(item.icon)}
                 </View>
-
                 <View
-                  className={`px-2 py-1 rounded ${
-                    item.status === 'RESOLVED'
-                      ? 'bg-green-100'
-                      : 'bg-primaryLight'
-                  }`}
+                  className="rounded-full px-2 py-0.5 self-start"
+                  style={{
+                    backgroundColor: item.status === 'RESOLVED' ? '#D1FAE5' : '#F0E8E4',
+                  }}
                 >
                   <Text
-                    className={`text-[10px] font-bold ${
-                      item.status === 'RESOLVED'
-                        ? 'text-green-700'
-                        : 'text-primary'
-                    }`}
+                    className="text-[9px] font-bold"
+                    style={{
+                      color: item.status === 'RESOLVED' ? '#065F46' : CRIMSON,
+                    }}
                   >
                     {item.status}
                   </Text>
                 </View>
-
               </View>
-
-              <Text className="text-[14px] font-bold text-textPrimary mb-1">
+              <Text className="text-[14px] font-bold mb-1" style={{ color: '#1A1A1A' }}>
                 {item.title}
               </Text>
-
-              <Text className="text-[12px] text-textSecondary mb-2">
+              <Text
+                className="text-[12px] mb-2"
+                style={{ color: '#6B6059', lineHeight: 17 }}
+              >
                 {item.description}
               </Text>
-
               <View className="flex-row justify-between items-center">
-
-                <Text className="text-[11px] text-textMuted font-semibold">
+                <Text className="text-[11px]" style={{ color: '#A89880' }}>
                   {item.date}
                 </Text>
-
                 <Text
-                  className={`text-[12px] font-bold ${
-                    item.status === 'RESOLVED'
-                      ? 'text-textMuted'
-                      : 'text-gold'
-                  }`}
+                  className="text-[12px] font-bold"
+                  style={{ color: item.status === 'RESOLVED' ? '#A89880' : GOLD }}
                 >
                   {item.action}
                 </Text>
-
               </View>
-
             </View>
           ))}
-
         </View>
-
-        <View className="h-8" />
 
       </ScrollView>
     </SafeAreaView>
