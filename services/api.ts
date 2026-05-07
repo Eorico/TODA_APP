@@ -14,6 +14,7 @@ export const SHARED_ENDPOINTS = {
     FORGOT_PASSWORD: `${BASE_URL}/auth/forgot-password`,
     VERIFY_CODE:     `${BASE_URL}/auth/verify-code`,
     RESET_PASSWORD:  `${BASE_URL}/auth/reset-password`,
+    DRIVER_PROFILE:    `${BASE_URL}/driver/profile`,
 };
 
 export const API_CONFIG = {

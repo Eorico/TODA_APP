@@ -77,6 +77,22 @@ export interface LostItem {
   action: string;
 }
 
+export interface DriverProfile {
+  id: string;
+  full_name: string;
+  last_name: string;
+  body_number: string;
+  contact: string;
+  email: string;
+  address: string;
+  status: string;
+  member_status: string;
+  license_url: string | null;
+  orcr_url: string | null;
+  last_contribution: number;
+  created_at: string;
+}
+
 export const CONVERSATIONS: Conversation[] = [
   {
     id: 'marcus-chen',

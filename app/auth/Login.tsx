@@ -12,6 +12,7 @@ import { useLoginForm } from '@/hooks/use_login_form';
 import { Toast } from '@/components/toast';
 import { useToast } from '@/hooks/use_toast';
 import { Role } from '@/constants/data';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -68,13 +69,17 @@ export default function LoginScreen() {
 
       if (data.role === 'driver') {
         if (response.status === 'pending') {
-          showToast('Your account is still being reviewed. Please wait for approval.', 'info');
+          showToast('Your account is still being reviewed.', 'info');
         } else if (response.status === 'rejected') {
-          showToast('Your account was not approved. Please contact the admin office.', 'error');
+          showToast('Your account was not approved.', 'error');
         } else {
+          // ✅ ADD THESE TWO LINES
+          await AsyncStorage.setItem('access_token', response.access_token);
+          await AsyncStorage.setItem('user', JSON.stringify(response));
           router.replace('/users/tricycle_driver/tabs/bulletin');
         }
-      } else {
+      } else if (data.role === 'passenger') {
+      // ✅ ADD YOUR PASSENGER ROUTE HERE
         router.replace('/users/passenger/tabs/bulletin');
       }
     } catch (error: any) {
