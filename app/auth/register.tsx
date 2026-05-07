@@ -179,7 +179,7 @@ export default function RegisterScreen() {
             : 'Account created successfully',
           'success'
         );
-        router.replace('/auth/login');
+        router.replace('/auth/Login');
       } else {
         throw new Error(response.detail || response.message);
       }
