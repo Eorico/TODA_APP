@@ -210,7 +210,13 @@ export default function RegisterScreen() {
         {/* Back Button */}
           <TouchableOpacity
             className="self-start w-10 h-10 rounded-xl bg-white items-center justify-center mb-5 shadow-sm"
-            onPress={() => router.back()}
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace('/auth/login');
+              }
+            }}
           >
             <ArrowLeft size={20} color="#7B1A1A" />
           </TouchableOpacity>
