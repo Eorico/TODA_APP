@@ -17,6 +17,7 @@ export const useRegistrationForm = () => {
             agreed: false,
             licenseUploaded: '',  
             orcrUploaded: '',
+            expiration_date_license: '',
         }
     })
 }

@@ -23,6 +23,7 @@ export default function LoginScreen() {
     watch,
     setValue,
     setError,
+    reset,
     formState: { isSubmitting, errors },
   } = useLoginForm();
 
@@ -80,6 +81,8 @@ export default function LoginScreen() {
         }
       } else if (data.role === 'passenger') {
       // ✅ ADD YOUR PASSENGER ROUTE HERE
+        await AsyncStorage.setItem('access_token', response.access_token);
+        await AsyncStorage.setItem('user', JSON.stringify(response));
         router.replace('/users/passenger/tabs/bulletin');
       }
     } catch (error: any) {
@@ -126,7 +129,15 @@ export default function LoginScreen() {
           {/* Role Toggle */}
           <View className="flex-row bg-[#EDE7DE] rounded-full p-1 mb-7 w-full">
             <TouchableOpacity
-              onPress={() => setValue('role', 'passenger')}
+              onPress={() => {
+                setValue('role', 'passenger');
+                reset({
+                  role: 'passenger',
+                  bodyNumber: '',
+                  email: '',
+                  password: '',
+                });
+              }}
               activeOpacity={0.8}
               className={`flex-1 flex-row items-center justify-center py-3 rounded-full ${role === 'passenger' ? 'bg-[#7B1A1A]' : ''}`}
             >
@@ -137,7 +148,15 @@ export default function LoginScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => setValue('role', 'driver')}
+              onPress={() => {
+                setValue('role', 'driver');
+                reset({
+                  role: 'driver',
+                  bodyNumber: '',
+                  email: '',
+                  password: '',
+                });
+              }}
               activeOpacity={0.8}
               className={`flex-1 flex-row items-center justify-center py-3 rounded-full ${role === 'driver' ? 'bg-[#7B1A1A]' : ''}`}
             >

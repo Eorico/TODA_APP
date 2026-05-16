@@ -160,7 +160,7 @@ export default function ProfileScreen() {
           style={{ backgroundColor: '#F0E8E4' }}>
           <View className="relative mb-4 top-2">
             <Image
-              source={{ uri: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=300' }}
+              source={{ uri: '' }}
               className="w-[110px] h-[110px] rounded-xl"
               style={{ borderWidth: 4, borderColor: GOLD }}
             />
@@ -211,6 +211,17 @@ export default function ProfileScreen() {
           </View>
           <View className="h-px my-1" style={{ backgroundColor: '#EDE7DE' }} />
 
+           <View className="py-2">
+            <Text className="text-[10px] font-bold tracking-widest mb-1" style={{ color: '#A89880' }}>EMAIL ADDRESS</Text>
+            <Text className="text-base" style={{ color: '#1A1A1A' }}>{profile.email || '—'}</Text>
+          </View>
+          <View className="h-px my-1" style={{ backgroundColor: '#EDE7DE' }} />
+
+          <View className="py-2">
+            <Text className="text-[10px] font-bold tracking-widest mb-1" style={{ color: '#A89880' }}>HOME ADDRESS</Text>
+            <Text className="text-base" style={{ color: '#1A1A1A' }}>{profile.address || '—'}</Text>
+          </View>
+
           <View className="py-2">
             <Text className="text-[10px] font-bold tracking-widest mb-1" style={{ color: '#A89880' }}>BODY NUMBER</Text>
             <Text className="text-base" style={{ color: '#1A1A1A' }}>#{profile.body_number}</Text>
@@ -226,55 +237,13 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* ── LICENSE & VERIFICATION ── */}
-        <View className="mx-4 mt-4 rounded-xl p-5"
-          style={{ backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E8E3DE' }}>
-          <View className="flex-row items-center gap-2 mb-4">
-            <Shield size={16} color={CRIMSON} strokeWidth={2} />
-            <Text className="text-xs font-extrabold tracking-widest" style={{ color: '#1A1A1A' }}>
-              LICENSE & VERIFICATION
-            </Text>
-          </View>
-
-          <View className="py-2">
-            <Text className="text-[10px] font-bold tracking-widest mb-2" style={{ color: '#A89880' }}>
-              DRIVER LICENSE STATUS
-            </Text>
-            <View className="flex-row items-center justify-between">
-              <View className="flex-row items-center px-2.5 py-1.5 rounded-full"
-                style={{ backgroundColor: isVerified ? CRIMSON : '#A89880' }}>
-                <BadgeCheck size={12} color="#fff" />
-                <Text className="text-white text-[11px] font-bold ml-1">
-                  {isVerified ? 'VERIFIED' : 'PENDING'}
-                </Text>
-              </View>
-              <TouchableOpacity className="flex-row items-center gap-1">
-                <Upload size={14} color="#6B6059" />
-                <Text className="text-[11px] font-bold" style={{ color: '#6B6059' }}>UPDATE</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <View className="h-px my-1" style={{ backgroundColor: '#EDE7DE' }} />
-
-          <View className="py-2">
-            <Text className="text-[10px] font-bold tracking-widest mb-1" style={{ color: '#A89880' }}>ACCOUNT STATUS</Text>
-            <Text className="text-base font-extrabold" style={{ color: '#1A1A1A' }}>{profile.status}</Text>
-            <Text className="text-[12px] mt-0.5" style={{ color: '#A89880' }}>
-              Member since {new Date(profile.created_at).toLocaleDateString('en-PH', {
-                year: 'numeric', month: 'long', day: 'numeric',
-              })}
-            </Text>
-          </View>
-        </View>
-
         {/* ── DOCUMENTS ── */}
         <View className="mx-4 mt-4 rounded-xl p-5"
           style={{ backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E8E3DE' }}>
           <View className="flex-row items-center gap-2 mb-4">
             <FileText size={16} color={CRIMSON} strokeWidth={2} />
             <Text className="text-xs font-extrabold tracking-widest" style={{ color: '#1A1A1A' }}>
-              DOCUMENTS
+              LICENSE AND OR/CR DOCUMENT
             </Text>
           </View>
 
@@ -294,41 +263,42 @@ export default function ProfileScreen() {
           <Text style={{ color: '#A89880', fontSize: 10, marginTop: 10, textAlign: 'center' }}>
             Tap a document to view full size
           </Text>
+
+          {/* ── Expiry Dates ── */}
+          <View className="h-px mt-4 mb-3" style={{ backgroundColor: '#EDE7DE' }} />
+
+          <View className="flex-row gap-3">
+            {/* License Expiry */}
+            <View style={{ flex: 1, backgroundColor: '#F5EFE8', borderRadius: 10, padding: 12 }}>
+              <Text style={{ color: '#A89880', fontSize: 10, fontWeight: '700',
+                letterSpacing: 1, marginBottom: 4 }}>
+                LICENSE EXPIRY
+              </Text>
+              <Text style={{ color: '#1A1A1A', fontSize: 13, fontWeight: '700' }}>
+                {profile.expiration_date_license
+                  ? new Date(profile.expiration_date_license).toLocaleDateString('en-PH', {
+                      year: 'numeric', month: 'short', day: 'numeric',
+                    })
+                  : '—'}
+              </Text>
+            </View>
+
+            {/* OR/CR Expiry */}
+            <View style={{ flex: 1, backgroundColor: '#F5EFE8', borderRadius: 10, padding: 12 }}>
+              <Text style={{ color: '#A89880', fontSize: 10, fontWeight: '700',
+                letterSpacing: 1, marginBottom: 4 }}>
+                OR/CR EXPIRY
+              </Text>
+              <Text style={{ color: '#1A1A1A', fontSize: 13, fontWeight: '700' }}>
+                {profile.expiration_date_orcr
+                  ? new Date(profile.expiration_date_orcr).toLocaleDateString('en-PH', {
+                      year: 'numeric', month: 'short', day: 'numeric',
+                    })
+                  : '—'}
+              </Text>
+            </View>
+          </View>
         </View>
-
-        {/* ── CONNECTIVITY ── */}
-        <View className="mx-4 mt-4 rounded-xl p-5"
-          style={{ backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E8E3DE' }}>
-          <View className="flex-row items-center gap-2 mb-4">
-            <Wifi size={16} color={CRIMSON} strokeWidth={2} />
-            <Text className="text-xs font-extrabold tracking-widest" style={{ color: '#1A1A1A' }}>
-              CONNECTIVITY
-            </Text>
-          </View>
-
-          <View className="py-2">
-            <Text className="text-[10px] font-bold tracking-widest mb-1" style={{ color: '#A89880' }}>EMAIL ADDRESS</Text>
-            <Text className="text-base" style={{ color: '#1A1A1A' }}>{profile.email || '—'}</Text>
-          </View>
-          <View className="h-px my-1" style={{ backgroundColor: '#EDE7DE' }} />
-
-          <View className="py-2">
-            <Text className="text-[10px] font-bold tracking-widest mb-1" style={{ color: '#A89880' }}>HOME ADDRESS</Text>
-            <Text className="text-base" style={{ color: '#1A1A1A' }}>{profile.address || '—'}</Text>
-          </View>
-        </View>
-
-        {/* ── ACTIONS ── */}
-        <TouchableOpacity
-          className="flex-row items-center mx-4 mt-4 rounded-xl py-4 px-4"
-          style={{ backgroundColor: GOLD }}>
-          <View className="w-[38px] h-[38px] rounded-lg items-center justify-center"
-            style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}>
-            <Receipt size={18} color="#fff" />
-          </View>
-          <Text className="flex-1 text-[15px] font-bold text-white ml-3">Transaction History</Text>
-          <ChevronRight size={18} color="#fff" />
-        </TouchableOpacity>
 
         {/* ── LOGOUT ── */}
         <TouchableOpacity

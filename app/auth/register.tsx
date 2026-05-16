@@ -42,6 +42,7 @@ export default function RegisterScreen() {
     watch,
     setValue,
     setError,
+    reset,
     formState: { isSubmitting, errors }
   } = useRegistrationForm();
 
@@ -130,6 +131,13 @@ export default function RegisterScreen() {
         formData.append('address', data.address || '');
         formData.append('body_number', data.bodyNumber || '');
 
+        if (data.expiration_date_license) {
+          formData.append('expiration_date_license', data.expiration_date_license);
+        }
+        if (data.expiration_date_orcr) {
+          formData.append('expiration_date_orcr', data.expiration_date_orcr);
+        }
+
         const uriParts = data.licenseUploaded.split('.');
         const fileType = uriParts[uriParts.length - 1];
 
@@ -159,6 +167,7 @@ export default function RegisterScreen() {
         formData.append('email', data.email);
         formData.append('password', data.password); 
         formData.append('contact_number', data.contact);
+        formData.append('address', data.address || '');
 
         body = formData;
         delete (headers as any)['Content-Type'];
@@ -255,7 +264,12 @@ export default function RegisterScreen() {
               className={`flex-1 flex-row items-center justify-center py-3 rounded-full ${
                 role === 'passenger' ? 'bg-[#7B1A1A]' : ''
               }`}
-              onPress={() => setValue('role', 'passenger')}
+              onPress={() => reset({
+                role: 'passenger',
+                fullName: '', email: '', contact: '', password: '', confirmPassword: '',
+                agreed: false,
+                address: '',
+              })}
             >
               <UserRound size={18} color={role === 'passenger' ? '#FFF' : '#7B1A1A'} />
               <Text
@@ -272,7 +286,17 @@ export default function RegisterScreen() {
               className={`flex-1 flex-row items-center justify-center py-3 rounded-full ${
                 role === 'driver' ? 'bg-[#7B1A1A]' : ''
               }`}
-              onPress={() => setValue('role', 'driver')}
+              onPress={() => reset({
+                role: 'driver',
+                fullName: '', email: '', contact: '', password: '', confirmPassword: '',
+                agreed: false,
+                address: undefined,
+                bodyNumber: undefined,
+                licenseUploaded: undefined,
+                orcrUploaded: undefined,
+                expiration_date_license: undefined,
+                expiration_date_orcr: undefined,
+              })}
             >
               <Bike size={18} color={role === 'driver' ? '#FFF' : '#7B1A1A'} />
               <Text
@@ -345,37 +369,37 @@ export default function RegisterScreen() {
             )}
           </View>
 
+          {/* ── ADD HERE — shown for both roles ── */}
+          <View className="w-full mb-4">
+            <Text className="text-[11px] font-bold text-[#7B1A1A] mb-2 tracking-wider">
+              HOME ADDRESS
+            </Text>
+            <View className="bg-[#EDE7DE] rounded-2xl px-4 py-4">
+              <Controller
+                control={control}
+                name="address"
+                rules={{ required: 'Address is required.' }}
+                render={({ field: { value, onChange } }) => (
+                  <TextInput
+                    className="text-[15px] text-[#1A1A1A]"
+                    placeholder="Street, Barangay, City"
+                    placeholderTextColor="#B0A8A0"
+                    value={value}
+                    onChangeText={onChange}
+                  />
+                )}
+              />
+            </View>
+            {errors.address && (
+              <Text className="text-[12px] text-[#FF0000] mt-1">
+                {errors.address.message}
+              </Text>
+            )}
+          </View>
+
           {/* Driver-only fields */}
           {!isPassenger && (
             <>
-              {/* Address */}
-              <View className="w-full mb-4">
-                <Text className="text-[11px] font-bold text-[#7B1A1A] mb-2 tracking-wider">
-                  COMPLETE ADDRESS
-                </Text>
-                <View className="bg-[#EDE7DE] rounded-2xl px-4 py-4">
-                  <Controller
-                    control={control}
-                    name="address"
-                    rules={{ required: 'Address is required.' }}
-                    render={({ field: { value, onChange } }) => (
-                      <TextInput
-                        className="text-[15px] text-[#1A1A1A]"
-                        placeholder="Street, Barangay, City"
-                        placeholderTextColor="#B0A8A0"
-                        value={value}
-                        onChangeText={onChange}
-                      />
-                    )}
-                  />
-                </View>
-                {errors.address && (
-                  <Text className="text-[12px] text-[#FF0000] mt-1">
-                    {errors.address.message}
-                  </Text>
-                )}
-              </View>
-
               {/* Body Number */}
               <View className="w-full mb-4">
                 <Text className="text-[11px] font-bold text-[#7B1A1A] mb-2 tracking-wider">
@@ -507,51 +531,78 @@ export default function RegisterScreen() {
           </View>
 
           {/* Driver's License Upload */}
-          {!isPassenger && (
-            <View className="w-full mb-6">
-              <Text className="text-[11px] font-bold text-[#7B1A1A] mb-2 tracking-wider">
-                DRIVER'S LICENSE
-              </Text>
-              <TouchableOpacity
-                className={`w-full border-2 border-dashed rounded-2xl overflow-hidden items-center justify-center ${
-                  licenseUploaded
-                    ? 'border-[#7B1A1A] bg-[#F5EBE0]'
-                    : 'border-[#D8CCBC] bg-[#FAF6F0]'
-                }`}
-                style={{ height: 160 }}
-                onPress={pickLicenseImage}
-              >
-                {licenseUploaded ? (
-                  // FIX: replaced `inset-0` with explicit absolute positioning
-                  <View className="w-full h-full">
-                    <Image
-                      source={{ uri: licenseUploaded }}
-                      className="w-full h-full"
-                      resizeMode="cover"
-                    />
-                    <View
-                      className="absolute bg-black/20 items-center justify-center"
-                      style={{ top: 0, left: 0, right: 0, bottom: 0 }}
-                    >
-                      <Text className="text-white font-bold">Tap to Change</Text>
+         {!isPassenger && (
+          <View className="w-full mb-6">
+            <Text className="text-[11px] font-bold text-[#7B1A1A] mb-2 tracking-wider">
+              DRIVER'S LICENSE
+            </Text>
+            <Controller
+              control={control}
+              name="licenseUploaded"
+              rules={{ required: "Please upload your driver's license." }}
+              render={() => (
+                <TouchableOpacity
+                  className={`w-full border-2 border-dashed rounded-2xl overflow-hidden items-center justify-center ${
+                    licenseUploaded ? 'border-[#7B1A1A] bg-[#F5EBE0]' : 'border-[#D8CCBC] bg-[#FAF6F0]'
+                  }`}
+                  style={{ height: 160 }}
+                  onPress={pickLicenseImage}
+                >
+                  {licenseUploaded ? (
+                    <View className="w-full h-full">
+                      <Image source={{ uri: licenseUploaded }} className="w-full h-full" resizeMode="cover" />
+                      <View className="absolute bg-black/20 items-center justify-center" style={{ top: 0, left: 0, right: 0, bottom: 0 }}>
+                        <Text className="text-white font-bold">Tap to Change</Text>
+                      </View>
                     </View>
-                  </View>
-                ) : (
-                  <>
-                    <View className="w-12 h-12 rounded-full bg-white items-center justify-center mb-2 shadow-sm">
-                      <Upload size={20} color="#7B1A1A" />
-                    </View>
-                    <Text className="font-bold text-[#6B6059]">Upload License Photo</Text>
-                    <Text className="text-[12px] text-[#B0A8A0]">Clear photo of front side</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-              {/* FIX: added missing license error display */}
-              {errors.licenseUploaded && (
-                <Text className="text-[12px] text-[#FF0000] mt-1">
-                  {errors.licenseUploaded.message}
-                </Text>
+                  ) : (
+                    <>
+                      <View className="w-12 h-12 rounded-full bg-white items-center justify-center mb-2 shadow-sm">
+                        <Upload size={20} color="#7B1A1A" />
+                      </View>
+                      <Text className="font-bold text-[#6B6059]">Upload License Photo</Text>
+                      <Text className="text-[12px] text-[#B0A8A0]">Clear photo of front side</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
               )}
+            />
+            {errors.licenseUploaded && (
+              <Text className="text-[12px] text-[#FF0000] mt-1">
+                {errors.licenseUploaded.message}
+              </Text>
+            )}
+          </View>
+        )}
+
+          {/* License Expiry Date */}
+          {!isPassenger && (
+            <View className="w-full mb-4">
+              <Text className="text-[11px] font-bold text-[#7B1A1A] mb-2 tracking-wider">
+                LICENSE EXPIRY DATE
+              </Text>
+              <View className="flex-row items-center bg-[#EDE7DE] rounded-2xl px-4 py-4">
+                <Controller
+                  control={control}
+                  rules={{ required: "License expiration date is required!" }}
+                  name="expiration_date_license"
+                  render={({ field: { value, onChange } }) => (
+                    <TextInput
+                      className="flex-1 text-[15px] text-[#1A1A1A]"
+                      placeholder="YYYY-MM-DD"
+                      placeholderTextColor="#B0A8A0"
+                      value={value}
+                      onChangeText={onChange}
+                      maxLength={10}
+                    />
+                  )}
+                />
+              </View>
+               {errors.expiration_date_license && (
+                  <Text className="text-[12px] text-[#FF0000] mt-1">
+                    {errors.expiration_date_license.message}
+                  </Text>
+                )}
             </View>
           )}
 
@@ -561,41 +612,72 @@ export default function RegisterScreen() {
               <Text className="text-[11px] font-bold text-[#7B1A1A] mb-2 tracking-wider">
                 OR / CR (Official Receipt / Certificate of Registration)
               </Text>
-              <TouchableOpacity
-                className={`w-full border-2 border-dashed rounded-2xl overflow-hidden items-center justify-center ${
-                  orcrUploaded ? 'border-[#7B1A1A] bg-[#F5EBE0]' : 'border-[#D8CCBC] bg-[#FAF6F0]'
-                }`}
-                style={{ height: 160 }}
-                onPress={pickOrCrImage}
-              >
-                {orcrUploaded ? (
-                  <View className="w-full h-full">
-                    <Image
-                      source={{ uri: orcrUploaded }}
-                      className="w-full h-full"
-                      resizeMode="cover"
-                    />
-                    <View
-                      className="absolute bg-black/20 items-center justify-center"
-                      style={{ top: 0, left: 0, right: 0, bottom: 0 }}
-                    >
-                      <Text className="text-white font-bold">Tap to Change</Text>
-                    </View>
-                  </View>
-                ) : (
-                  <>
-                    <View className="w-12 h-12 rounded-full bg-white items-center justify-center mb-2 shadow-sm">
-                      <Upload size={20} color="#7B1A1A" />
-                    </View>
-                    <Text className="font-bold text-[#6B6059]">Upload OR/CR Photo</Text>
-                    <Text className="text-[12px] text-[#B0A8A0]">Official Receipt or Certificate of Registration</Text>
-                  </>
+              <Controller
+                control={control}
+                name="orcrUploaded"
+                rules={{ required: 'Please upload your OR/CR.' }}
+                render={() => (
+                  <TouchableOpacity
+                    className={`w-full border-2 border-dashed rounded-2xl overflow-hidden items-center justify-center ${
+                      orcrUploaded ? 'border-[#7B1A1A] bg-[#F5EBE0]' : 'border-[#D8CCBC] bg-[#FAF6F0]'
+                    }`}
+                    style={{ height: 160 }}
+                    onPress={pickOrCrImage}
+                  >
+                    {orcrUploaded ? (
+                      <View className="w-full h-full">
+                        <Image source={{ uri: orcrUploaded }} className="w-full h-full" resizeMode="cover" />
+                        <View className="absolute bg-black/20 items-center justify-center" style={{ top: 0, left: 0, right: 0, bottom: 0 }}>
+                          <Text className="text-white font-bold">Tap to Change</Text>
+                        </View>
+                      </View>
+                    ) : (
+                      <>
+                        <View className="w-12 h-12 rounded-full bg-white items-center justify-center mb-2 shadow-sm">
+                          <Upload size={20} color="#7B1A1A" />
+                        </View>
+                        <Text className="font-bold text-[#6B6059]">Upload OR/CR Photo</Text>
+                        <Text className="text-[12px] text-[#B0A8A0]">Official Receipt or Certificate of Registration</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
                 )}
-              </TouchableOpacity>
+              />
               {errors.orcrUploaded && (
                 <Text className="text-[12px] text-[#FF0000] mt-1">
                   {errors.orcrUploaded.message}
                 </Text>
+              )}
+            </View>
+          )}
+
+          {/* OR/CR Expiry Date */}
+          {!isPassenger && (
+            <View className="w-full mb-6">
+              <Text className="text-[11px] font-bold text-[#7B1A1A] mb-2 tracking-wider">
+                OR/CR EXPIRY DATE
+              </Text>
+              <View className="flex-row items-center bg-[#EDE7DE] rounded-2xl px-4 py-4">
+                <Controller
+                  control={control}
+                  rules={{ required: "OR/CR expiration date is required!" }}
+                  name="expiration_date_orcr"
+                  render={({ field: { value, onChange } }) => (
+                    <TextInput
+                      className="flex-1 text-[15px] text-[#1A1A1A]"
+                      placeholder="YYYY-MM-DD"
+                      placeholderTextColor="#B0A8A0"
+                      value={value}
+                      onChangeText={onChange}
+                      maxLength={10}
+                    />
+                  )}
+                />
+              </View>
+              {errors.expiration_date_orcr && (
+                  <Text className="text-[12px] text-[#FF0000] mt-1">
+                    {errors.expiration_date_orcr.message}
+                  </Text>
               )}
             </View>
           )}

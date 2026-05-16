@@ -21,6 +21,8 @@ export type RegisterFormData = {
   agreed: boolean;
   licenseUploaded?: string;
   orcrUploaded?: string;
+  expiration_date_license?: string;
+  expiration_date_orcr?: string;
 }
 
 export type EmailStepData = {
@@ -91,6 +93,8 @@ export interface DriverProfile {
   orcr_url: string | null;
   last_contribution: number;
   created_at: string;
+  expiration_date_license?: string | null;
+  expiration_date_orcr?: string | null;
 }
 
 export const CONVERSATIONS: Conversation[] = [
